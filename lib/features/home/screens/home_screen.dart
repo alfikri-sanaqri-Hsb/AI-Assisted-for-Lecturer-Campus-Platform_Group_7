@@ -1,257 +1,131 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/greeting_header.dart';
+import '../widgets/main_menu_row.dart';
+import '../widgets/continue_learning_card.dart';
+import '../widgets/daily_mission_card.dart';
+import '../widgets/live_schedule_list.dart';
+import '../widgets/testimonial_list.dart';
+import '../widgets/promo_banner.dart';
+import '../widgets/course_catalog_list.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FC),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Greeting
-              const Text(
-                'Halo, Alfikri 👋',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: CustomScrollView(
+
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            pinned: true, 
+            stretch: true, 
+            elevation: 0,
+            backgroundColor: const Color(0xFF48B5FF), 
+            toolbarHeight: 95, 
+            expandedHeight: 380, 
+            
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            
+            title: const Padding(
+              padding: EdgeInsets.only(top: 8.0),
+              child: GreetingHeader(),
+            ),
+            centerTitle: false,
+            
+            flexibleSpace: FlexibleSpaceBar(
+              // Memberikan efek zoom pada gambar background biru saat membal
+              stretchModes: const [
+                StretchMode.zoomBackground,
+              ],
+              background: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/header_bg.jpeg'), 
+                      fit: BoxFit.cover,
+                      alignment: Alignment(0.0, -1.3), 
+                    ),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        PromoBanner(), 
+                        SizedBox(height: 20), 
+                        
+                        MainMenuRow(), 
+                        SizedBox(height: 40), 
+                      ],
+                    ),
+                  ),
                 ),
               ),
+            ),
+          ),
 
-              const SizedBox(height: 6),
-
-              const Text(
-                'Siap belajar hari ini?',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Target PTN
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDE7F6),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '🎯 Target PTN',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    SizedBox(height: 10),
-
-                    Text(
-                      'Universitas Brawijaya',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    SizedBox(height: 4),
-
-                    Text(
-                      'Teknologi Informasi',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Section title
-              const Text(
-                'Lanjutkan Belajar',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Continue learning card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Matematika Dasar',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      'Persamaan dan Pertidaksamaan',
-                      style: TextStyle(
-                        color: Colors.grey,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: const LinearProgressIndicator(
-                        value: 0.65,
-                        minHeight: 8,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      '65% selesai',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Quick actions
-              const Text(
-                'Mulai Belajar',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _ActionCard(
-                      icon: Icons.menu_book_rounded,
-                      title: 'Materi',
-                    ),
-                  ),
+                  _buildSectionTitle('Lanjutkan Belajar ➔'),
+                  const SizedBox(height: 12),
+                  const ContinueLearningCard(), 
 
-                  const SizedBox(width: 12),
+                  const SizedBox(height: 24),
 
-                  Expanded(
-                    child: _ActionCard(
-                      icon: Icons.quiz_rounded,
-                      title: 'Tryout',
-                    ),
-                  ),
+                  _buildSectionTitle('Misi Harian Fauzan ➔'),
+                  const SizedBox(height: 12),
+                  const DailyMissionCard(), 
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionTitle('Pembelian Program Belajar ➔'),
+                  const SizedBox(height: 12),
+                  const CourseCatalogList(), 
+                  
+                  const SizedBox(height: 24),
+
+                  _buildSectionTitle('Jadwal Live Terdekat ➔'),
+                  const SizedBox(height: 12),
+                  const LiveScheduleList(), 
+                  
+                  const SizedBox(height: 24),
+
+                  _buildSectionTitle('Apa Kata Mereka?'),
+                  const SizedBox(height: 12),
+                  const TestimonialList(), 
                 ],
               ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionCard(
-                      icon: Icons.auto_graph_rounded,
-                      title: 'Prediksi',
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: _ActionCard(
-                      icon: Icons.person_rounded,
-                      title: 'Mentor',
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 20,
-        horizontal: 12,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 30,
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
       ),
     );
   }
