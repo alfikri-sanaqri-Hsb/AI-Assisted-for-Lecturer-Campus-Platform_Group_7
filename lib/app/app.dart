@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/main_navigation.dart';
 import '../features/auth/screens/splash_screen.dart';
 
 class SahabatBelajarApp extends StatelessWidget {
@@ -7,10 +8,11 @@ class SahabatBelajarApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Sahabat Belajar',
-      home: const SplashScreen(),
+
+      home: MainNavigation(), 
     );
   }
 }
