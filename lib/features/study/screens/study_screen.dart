@@ -1,227 +1,120 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/study_header.dart';
+import '../widgets/study_components.dart';
+
 class StudyScreen extends StatelessWidget {
   const StudyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FC),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F7FC),
-        elevation: 0,
-        title: const Text(
-          'Study',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Mau belajar apa hari ini?',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+
+          SliverAppBar(
+            pinned: true,
+            stretch: true,
+            elevation: 0,
+            backgroundColor: const Color(0xFF48B5FF),
+            toolbarHeight: 95,
+            
+            expandedHeight: 400, 
+            
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
               ),
             ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Pilih materi dan mulai tingkatkan kemampuanmu.',
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey,
-              ),
+            
+            title: const Padding(
+              padding: EdgeInsets.only(top: 8.0),
+              child: StudyHeader(),
             ),
-
-            const SizedBox(height: 24),
-
-            const Text(
-              'Mata Pelajaran',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            _SubjectCard(
-              icon: Icons.calculate_rounded,
-              title: 'Matematika',
-              subtitle: '12 materi tersedia',
-            ),
-
-            const SizedBox(height: 12),
-
-            _SubjectCard(
-              icon: Icons.menu_book_rounded,
-              title: 'Bahasa Indonesia',
-              subtitle: '10 materi tersedia',
-            ),
-
-            const SizedBox(height: 12),
-
-            _SubjectCard(
-              icon: Icons.language_rounded,
-              title: 'Bahasa Inggris',
-              subtitle: '15 materi tersedia',
-            ),
-
-            const SizedBox(height: 12),
-
-            _SubjectCard(
-              icon: Icons.science_rounded,
-              title: 'Penalaran',
-              subtitle: '8 materi tersedia',
-            ),
-
-            const SizedBox(height: 24),
-
-            const Text(
-              'Rekomendasi Untukmu',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            centerTitle: false,
+            
+            flexibleSpace: FlexibleSpaceBar(
+              stretchModes: const [
+                StretchMode.zoomBackground,
+              ],
+              background: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/header_bg.jpeg'), 
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter, 
+                    ),
                   ),
-                ],
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ContinueLearningCard(),
+                        SizedBox(height: 16),
+                        StudyMissionCard(),
+                        SizedBox(height: 30),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              child: const Column(
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Persamaan dan Pertidaksamaan',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  _buildSectionTitleWithAction('Rekomendasi Topik'),
+                  const SizedBox(height: 12),
+                  const TopicRecommendationList(),
+                  const SizedBox(height: 24),
 
-                  SizedBox(height: 8),
+                  const UpcomingScheduleCard(),
+                  const SizedBox(height: 24),
 
-                  Text(
-                    'Materi yang direkomendasikan berdasarkan progress belajarmu.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  const StudyTipsCard(),
+                  const SizedBox(height: 24),
 
-                  SizedBox(height: 16),
-
-                  Text(
-                    'Mulai belajar →',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  const ActionMenuCard(title: 'Latihan Soal UTBK', icon: Icons.menu_book),
+                  const ActionMenuCard(title: 'TryOut Online', icon: Icons.emoji_events),
+                  const ActionMenuCard(title: 'Flashcard', icon: Icons.style_outlined),
+                  const ActionMenuCard(title: 'Bank Soal Lengkap', icon: Icons.bar_chart),
+                  
+                  const SizedBox(height: 80), 
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-}
 
-class _SubjectCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _SubjectCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: const Color(0xFFEDE7F6),
-            ),
-            child: Icon(
-              icon,
-              size: 28,
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: Colors.grey,
-          ),
-        ],
-      ),
+  Widget _buildSectionTitleWithAction(String title) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        Row(
+          children: [
+            Icon(Icons.arrow_back_ios, size: 12, color: Colors.grey.shade500),
+            const SizedBox(width: 12),
+            const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.black87),
+          ],
+        )
+      ],
     );
   }
 }
