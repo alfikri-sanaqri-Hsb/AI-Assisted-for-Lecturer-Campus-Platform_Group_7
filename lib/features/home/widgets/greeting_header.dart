@@ -10,7 +10,6 @@ class GreetingHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            // Foto profil dengan garis luar (border) putih
             Container(
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
@@ -38,14 +37,12 @@ class GreetingHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    // Menampilkan aset gambar tangan, jika gagal muat akan menampilkan teks emoji
                     Image.asset(
                       'assets/images/wave_hand.png', 
                       height: 16, 
                       errorBuilder: (c, e, s) => const Text('👋', style: TextStyle(fontSize: 14))
                     ),
                     const SizedBox(width: 4),
-                    // Ikon diamond sesuai desain Figma
                     const Icon(Icons.diamond_outlined, color: Colors.white70, size: 14),
                   ],
                 ),

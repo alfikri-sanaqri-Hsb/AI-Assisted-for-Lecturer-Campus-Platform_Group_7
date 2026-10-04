@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/main_navigation.dart';
-import '../features/auth/screens/splash_screen.dart';
+import '../features/auth/screens/login_screen.dart';
 
 class SahabatBelajarApp extends StatelessWidget {
   const SahabatBelajarApp({super.key});
@@ -11,8 +11,7 @@ class SahabatBelajarApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Sahabat Belajar',
-
-      home: MainNavigation(), 
+      home: LoginScreen(), 
     );
   }
 }

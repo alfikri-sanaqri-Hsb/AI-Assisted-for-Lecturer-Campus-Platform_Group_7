@@ -56,7 +56,7 @@ class HomeScreen extends StatelessWidget {
                     image: DecorationImage(
                       image: AssetImage('assets/images/header_bg.jpeg'), 
                       fit: BoxFit.cover,
-                      alignment: Alignment(0.0, -1.3), 
+                      alignment: Alignment.topCenter, 
                     ),
                   ),
                   child: const Padding(
