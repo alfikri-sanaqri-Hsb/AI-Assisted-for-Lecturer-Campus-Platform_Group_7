@@ -3,31 +3,44 @@ import React, { useState, useRef } from 'react';
 export default function Mentor() {
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef(null);
+  
+  // STATE BARU: Untuk melacak bola (dot) mana yang sedang aktif
+  const [activeDot, setActiveDot] = useState(0);
 
   const handleScroll = (e) => {
     setIsScrolled(e.target.scrollTop > 20);
   };
 
-  // Fungsi untuk menggeser carousel ke kiri
-  const scrollLeft = () => {
+  // FUNGSI BARU: Mendeteksi posisi geser carousel untuk menyinkronkan bola
+  const handleCarouselScroll = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+      const scrollLeft = scrollContainerRef.current.scrollLeft;
+      // Perkiraan lebar 1 card (260px) + gap (24px) = 284px
+      const activeIndex = Math.round(scrollLeft / 284);
+      setActiveDot(activeIndex);
     }
   };
 
-  // Fungsi untuk menggeser carousel ke kanan
-  const scrollRight = () => {
+  const scrollLeftBtn = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: -284, behavior: 'smooth' });
     }
   };
 
-  // Data Mentor sesuai referensi gambar
+  const scrollRightBtn = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 284, behavior: 'smooth' });
+    }
+  };
+
+  // DATA DITAMBAHKAN: Menjadi 6 mentor agar scroll lebih panjang dan proporsional
   const featuredMentors = [
     { name: 'Mister Ryan,\nalumni UNDIP', role: 'Penalaran Penge-\ntahuan Kuantitatif', rating: 5, avatar: '👦🏽' },
     { name: 'Ir. Alfi\nalumni ITB', role: 'Penalaran\nMatematika\ndan Sains', rating: 5, avatar: '👦🏻' },
     { name: 'Prof. Ojan\nalumni UGM', role: 'Biologi dan Fisika\nPeminatan', rating: 5, avatar: '👦' },
-    { name: 'Kak Siska,\nalumni UI', role: 'Literasi Bahasa\nIndonesia', rating: 5, avatar: '👧' }, // Tambahan agar bisa digeser
+    { name: 'Kak Siska,\nalumni UI', role: 'Literasi Bahasa\nIndonesia', rating: 5, avatar: '👧' },
+    { name: 'Bang Dika,\nalumni ITS', role: 'Fisika dan\nKimia', rating: 5, avatar: '👦🏽' },
+    { name: 'Mbak Rina,\nalumni UNPAD', role: 'Sosiologi dan\nSejarah', rating: 5, avatar: '👧🏻' },
   ];
 
   const allMentors = [
@@ -41,8 +54,8 @@ export default function Mentor() {
       className="w-full h-screen overflow-y-auto pb-16 bg-[#D8F1FF] relative"
       onScroll={handleScroll}
     >
-      {/* LATAR BELAKANG BIRU STATIS */}
-      <div className="absolute top-0 left-0 right-0 h-[500px] bg-[#3CB8FF] overflow-hidden z-0 rounded-b-[4rem]">
+      {/* LATAR BELAKANG BIRU STATIS (Tinggi sudah disesuaikan agar tidak memotong card) */}
+      <div className="absolute top-0 left-0 right-0 h-[620px] bg-[#3CB8FF] overflow-hidden z-0 rounded-b-[4rem]">
         <div className="absolute inset-0 opacity-10 pointer-events-none flex justify-around items-center">
           <span className="text-7xl text-white">👨‍🏫</span>
           <span className="text-9xl text-white">📚</span>
@@ -97,45 +110,35 @@ export default function Mentor() {
             {/* Slider/Carousel Container */}
             <div className="relative flex items-center justify-center">
               
-              {/* Tombol Geser Kiri */}
               <button 
-                onClick={scrollLeft} 
+                onClick={scrollLeftBtn} 
                 className="absolute left-[-2rem] z-20 text-blue-900/40 hover:text-blue-900/70 transition-colors"
               >
                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path></svg>
               </button>
 
-              {/* Area Scroll Utama */}
+              {/* Area Scroll Utama (Ditambahkan onScroll handler) */}
               <div 
                 ref={scrollContainerRef}
+                onScroll={handleCarouselScroll}
                 className="flex gap-6 overflow-x-auto pb-8 pt-4 px-2 snap-x scroll-smooth w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               >
                 {featuredMentors.map((mentor, idx) => (
                   <div key={idx} className="snap-center min-w-[240px] md:min-w-[260px] bg-white rounded-[1.25rem] shadow-xl flex flex-col items-center text-center relative shrink-0 overflow-hidden">
-                    
-                    {/* Header Biru Kartu */}
                     <div className="w-full h-[5.5rem] bg-[#5389C6]"></div>
-                    
-                    {/* Foto Profil Melayang */}
                     <div className="w-[4.5rem] h-[4.5rem] bg-slate-200 rounded-full flex items-center justify-center text-3xl border-[3px] border-white absolute top-10 left-1/2 -translate-x-1/2 overflow-hidden shadow-sm">
                       {mentor.avatar}
                     </div>
-                    
-                    {/* Konten Kartu */}
                     <div className="pt-10 px-5 pb-6 flex flex-col items-center flex-1 w-full">
                       <h3 className="font-extrabold text-black text-[15px] leading-snug mb-2 whitespace-pre-line">
                         {mentor.name}
                       </h3>
-                      
-                      {/* Bintang Rating */}
                       <div className="flex gap-1 text-[#FFAC33] text-sm mb-3">
                         {'★'.repeat(mentor.rating)}
                       </div>
-                      
                       <p className="text-[13px] text-slate-400 font-medium leading-relaxed mb-6 flex-1 px-2 whitespace-pre-line">
                         {mentor.role}
                       </p>
-                      
                       <button className="w-full bg-[#00A5FF] hover:bg-blue-500 text-white font-bold text-sm py-2.5 rounded-lg shadow-[0_4px_14px_0_rgba(0,165,255,0.39)] transition-all">
                         Lihat Profil
                       </button>
@@ -144,21 +147,34 @@ export default function Mentor() {
                 ))}
               </div>
 
-              {/* Tombol Geser Kanan */}
               <button 
-                onClick={scrollRight} 
+                onClick={scrollRightBtn} 
                 className="absolute right-[-2rem] z-20 text-blue-900/40 hover:text-blue-900/70 transition-colors"
               >
                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path></svg>
               </button>
             </div>
             
-            {/* Pagination Dots (Indikator) */}
+            {/* Pagination Dots (Dibatasi 4 bola agar sesuai referensi desain) */}
             <div className="flex justify-center gap-2.5 mt-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#00A5FF] shadow-sm"></div>
-              <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
-              <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
-              <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+              {Array.from({ length: 4 }).map((_, idx) => {
+                // Mencegah error indeks: jika scroll mentok sampai ujung, bola ke-4 (indeks 3) yang akan tetap menyala
+                const currentDot = activeDot >= 3 ? 3 : activeDot;
+                
+                return (
+                  <button 
+                    key={idx}
+                    onClick={() => {
+                      if (scrollContainerRef.current) {
+                        scrollContainerRef.current.scrollTo({ left: idx * 284, behavior: 'smooth' });
+                      }
+                    }}
+                    className={`h-2.5 rounded-full shadow-sm transition-all duration-300 ${
+                      currentDot === idx ? 'bg-[#00A5FF] w-6' : 'bg-slate-300 w-2.5 hover:bg-slate-400'
+                    }`}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
@@ -166,11 +182,8 @@ export default function Mentor() {
         {/* KONTEN UTAMA BAGIAN BAWAH */}
         <div className="px-8 mt-12 space-y-6 max-w-6xl mx-auto">
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            
-            {/* KOLOM KIRI (Daftar Lengkap Mentor) */}
             <div className="xl:col-span-2 space-y-4">
               <h2 className="font-extrabold text-black text-xl mb-4">Daftar Lengkap Mentor ➔</h2>
-              
               <div className="space-y-4">
                 {allMentors.map((mentor, idx) => (
                   <div key={idx} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
@@ -195,10 +208,8 @@ export default function Mentor() {
               </div>
             </div>
 
-            {/* KOLOM KANAN (Sesi Saya Berikutnya) */}
             <div className="space-y-4">
               <h2 className="font-extrabold text-black text-xl mb-4">Sesi Saya Berikutnya ➔</h2>
-              
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-5">
                   <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center text-3xl shadow-inner shrink-0 border border-slate-200">
@@ -215,10 +226,8 @@ export default function Mentor() {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
   );
