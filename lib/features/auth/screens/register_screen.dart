@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import '../widgets/auth_logo_card.dart';
 import '../widgets/auth_footer.dart';
+import '../../main_navigation.dart';
 
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
@@ -52,7 +53,7 @@ class RegisterScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // Toggle Button Header (Daftar Baru Aktif)
+                        // Toggle Button Header
                         _buildToggleHeader(context),
 
                         const SizedBox(height: 16),
@@ -105,10 +106,16 @@ class RegisterScreen extends StatelessWidget {
                           height: 50,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Action pendaftaran
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MainNavigation(),
+                                ),
+                                (route) => false,
+                              );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1E78E6), // Biru Solid
+                              backgroundColor: const Color(0xFF1E78E6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -177,36 +184,38 @@ class RegisterScreen extends StatelessWidget {
   }
 
   // Header Toggle Tab
-  Widget _buildToggleHeader(BuildContext context) {
+    Widget _buildToggleHeader(BuildContext context) {
     return Container(
-      height: 48,
+      height: 52,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade400),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          // Tombol "Masuk" (Non-aktif)
+          // Tab Masuk
           Expanded(
             child: InkWell(
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const LoginScreen(),
+                  ),
                 );
               },
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(13),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
                   Icon(Icons.login, color: Colors.black87, size: 18),
-                  SizedBox(width: 6),
+                  SizedBox(width: 8),
                   Text(
                     'Masuk',
                     style: TextStyle(
                       color: Colors.black87,
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
                     ),
                   ),
                 ],
@@ -214,24 +223,24 @@ class RegisterScreen extends StatelessWidget {
             ),
           ),
 
-          // Tombol "Daftar Baru" (Aktif)
+          // Tab Daftar Baru 
           Expanded(
             child: Container(
+              height: double.infinity,
               decoration: BoxDecoration(
                 color: const Color(0xFFDFEEFD),
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(13),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
                   Icon(Icons.person_add_alt_1, color: Color(0xFF1E78E6), size: 18),
-                  SizedBox(width: 6),
+                  SizedBox(width: 8),
                   Text(
                     'Daftar Baru',
                     style: TextStyle(
                       color: Color(0xFF1E78E6),
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
                     ),
                   ),
                 ],

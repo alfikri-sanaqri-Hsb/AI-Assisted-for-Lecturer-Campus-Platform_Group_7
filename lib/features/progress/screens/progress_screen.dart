@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/greeting_header.dart';
-import '../widgets/main_menu_row.dart';
-import '../widgets/continue_learning_card.dart';
-import '../widgets/daily_mission_card.dart';
-import '../widgets/live_schedule_list.dart';
-import '../widgets/testimonial_list.dart';
-import '../widgets/promo_banner.dart';
-import '../widgets/course_catalog_list.dart';
+import '../../home/widgets/greeting_header.dart'; 
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+import '../widgets/progress_header_card.dart';
+import '../widgets/tryout_result_list.dart';
+import '../widgets/tryout_stats_chart.dart';
+import '../widgets/strengths_improvements_card.dart';
+import '../widgets/subject_progress_card.dart';
+
+class ProgressScreen extends StatelessWidget {
+  const ProgressScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,24 +25,19 @@ class HomeScreen extends StatelessWidget {
             backgroundColor: const Color(0xFF48B5FF),
             toolbarHeight: 95,
             expandedHeight: 380,
-            
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               ),
             ),
-            
             title: const Padding(
               padding: EdgeInsets.only(top: 8.0),
               child: GreetingHeader(),
             ),
             centerTitle: false,
-            
             flexibleSpace: FlexibleSpaceBar(
-              stretchModes: const [
-                StretchMode.zoomBackground,
-              ],
+              stretchModes: const [StretchMode.zoomBackground],
               background: ClipRRect(
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
@@ -62,9 +56,7 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        PromoBanner(),
-                        SizedBox(height: 20),
-                        MainMenuRow(),
+                        ProgressHeaderCard(),
                         SizedBox(height: 30),
                       ],
                     ),
@@ -73,56 +65,45 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle('Lanjutkan Belajar ➔'),
-                  const SizedBox(height: 12),
-                  const ContinueLearningCard(),
-
+                  // 1. Daftar Tryout List
+                  const TryoutResultList(),
                   const SizedBox(height: 24),
-
-                  _buildSectionTitle('Misi Harian Fauzan ➔'),
+                  
+                  // 2. Judul & Grafik Statistik TryOut
+                  const Text(
+                    'Statistik TryOut',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  const DailyMissionCard(),
-
-                  const SizedBox(height: 24),
-
-                  _buildSectionTitle('Pembelian Program Belajar ➔'),
-                  const SizedBox(height: 12),
-                  const CourseCatalogList(),
+                  const TryoutStatsChart(),
                   
                   const SizedBox(height: 24),
-
-                  _buildSectionTitle('Jadwal Live Terdekat ➔'),
-                  const SizedBox(height: 12),
-                  const LiveScheduleList(),
+                  
+                  // 3. Card Kekuatan & Perlu Ditingkatkan
+                  const StrengthsImprovementsCard(),
                   
                   const SizedBox(height: 24),
-
-                  _buildSectionTitle('Apa Kata Mereka?'),
-                  const SizedBox(height: 12),
-                  const TestimonialList(),
+                  
+                  // 4. Daftar Kategori Subtes
+                  const SubjectProgressCard(title: 'Pengetahuan Kuantitatif'),
+                  const SubjectProgressCard(title: 'Penalaran Matematika'),
+                  const SubjectProgressCard(title: 'Penalaran Umum'),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
       ),
     );
   }
