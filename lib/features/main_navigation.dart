@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'home/screens/home_screen.dart';
 import 'study/screens/study_screen.dart';
+import 'progress/screens/progress_screen.dart';
+import 'mentor/screens/mentor_screen.dart';
+import 'ranking/screens/ranking_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -11,15 +14,14 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-
   int _selectedIndex = 2;
 
   final List<Widget> _screens = [
     const StudyScreen(),
-    const Center(child: Text('Halaman Progress (Belum dibuat)')),
+    const ProgressScreen(),
     const HomeScreen(),
-    const Center(child: Text('Halaman Ranking (Belum dibuat)')),
-    const Center(child: Text('Halaman Mentor (Belum dibuat)')),
+    const RankingScreen(),
+    const MentorScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -31,9 +33,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: _screens[_selectedIndex],
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

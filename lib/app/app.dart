@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../features/main_navigation.dart';
 import '../features/auth/screens/login_screen.dart';
 
 class SahabatBelajarApp extends StatelessWidget {

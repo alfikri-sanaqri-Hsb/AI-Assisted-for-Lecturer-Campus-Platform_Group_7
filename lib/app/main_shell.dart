@@ -9,7 +9,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _selectedIndex = 2; // Default di halaman Home
+  int _selectedIndex = 2;
 
   final List<Widget> _pages = [
     const Center(child: Text('Halaman Study')),

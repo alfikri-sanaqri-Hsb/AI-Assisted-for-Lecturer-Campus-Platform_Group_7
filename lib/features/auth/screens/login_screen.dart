@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../main_navigation.dart';
 import '../widgets/auth_logo_card.dart';
 import '../widgets/social_login_button.dart';
 import '../widgets/auth_footer.dart';
@@ -36,7 +37,7 @@ class LoginScreen extends StatelessWidget {
                   
                   const SizedBox(height: 32),
 
-                  // Kartu Tengah (Login)
+                  // Kartu Tengah
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 24),
                     padding: const EdgeInsets.all(24),
@@ -53,7 +54,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // Toggle Header dengan fungsi Navigasi
+                        // Toggle Header
                         _buildToggleHeader(context),
                         const SizedBox(height: 24),
 
@@ -66,7 +67,15 @@ class LoginScreen extends StatelessWidget {
                                 const Icon(Icons.g_mobiledata, size: 28),
                           ),
                           text: 'Masuk Dengan Google',
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MainNavigation(),
+                              ),
+                              (route) => false,
+                            );
+                          },
                         ),
                         const SizedBox(height: 16),
 
@@ -74,11 +83,18 @@ class LoginScreen extends StatelessWidget {
                         SocialLoginButton(
                           icon: const Icon(Icons.mail_outline, color: Colors.black87),
                           text: 'Masuk Dengan Email',
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MainNavigation(),
+                              ),
+                              (route) => false,
+                            );
+                          },
                         ),
                         const SizedBox(height: 24),
 
-                        // Teks Bawah + Navigasi ke Register
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -101,7 +117,7 @@ class LoginScreen extends StatelessWidget {
                               child: const Text(
                                 'Daftar',
                                 style: TextStyle(
-                                  color: Color(0xFF48B5FF),
+                                  color: Color(0xFF1E78E6),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -125,32 +141,33 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  // Toggle Header dengan Navigasi ke Register
+  // Toggle Header
   Widget _buildToggleHeader(BuildContext context) {
     return Container(
-      height: 50,
+      height: 52,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade400),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          // Tab Masuk (Aktif)
           Expanded(
             child: Container(
+              height: double.infinity,
               decoration: BoxDecoration(
                 color: const Color(0xFFDFEEFD),
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(13),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(Icons.login, color: Color(0xFF48B5FF), size: 18),
+                  Icon(Icons.login, color: Color(0xFF1E78E6), size: 18),
                   SizedBox(width: 8),
                   Text(
                     'Masuk',
                     style: TextStyle(
-                      color: Color(0xFF48B5FF),
+                      color: Color(0xFF1E78E6),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -159,7 +176,7 @@ class LoginScreen extends StatelessWidget {
             ),
           ),
 
-          // Tab Daftar Baru (Navigasi ke RegisterScreen)
+          // Tab Daftar Baru
           Expanded(
             child: InkWell(
               onTap: () {
@@ -170,7 +187,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                 );
               },
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(13),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [

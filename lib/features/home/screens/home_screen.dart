@@ -17,16 +17,15 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: CustomScrollView(
-
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            pinned: true, 
-            stretch: true, 
+            pinned: true,
+            stretch: true,
             elevation: 0,
-            backgroundColor: const Color(0xFF48B5FF), 
-            toolbarHeight: 95, 
-            expandedHeight: 380, 
+            backgroundColor: const Color(0xFF48B5FF),
+            toolbarHeight: 95,
+            expandedHeight: 380,
             
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.only(
@@ -42,7 +41,6 @@ class HomeScreen extends StatelessWidget {
             centerTitle: false,
             
             flexibleSpace: FlexibleSpaceBar(
-              // Memberikan efek zoom pada gambar background biru saat membal
               stretchModes: const [
                 StretchMode.zoomBackground,
               ],
@@ -54,9 +52,9 @@ class HomeScreen extends StatelessWidget {
                 child: Container(
                   decoration: const BoxDecoration(
                     image: DecorationImage(
-                      image: AssetImage('assets/images/header_bg.jpeg'), 
+                      image: AssetImage('assets/images/header_bg.jpeg'),
                       fit: BoxFit.cover,
-                      alignment: Alignment.topCenter, 
+                      alignment: Alignment.topCenter,
                     ),
                   ),
                   child: const Padding(
@@ -64,11 +62,10 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        PromoBanner(), 
-                        SizedBox(height: 20), 
-                        
-                        MainMenuRow(), 
-                        SizedBox(height: 40), 
+                        PromoBanner(),
+                        SizedBox(height: 20),
+                        MainMenuRow(),
+                        SizedBox(height: 30),
                       ],
                     ),
                   ),
@@ -85,31 +82,31 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _buildSectionTitle('Lanjutkan Belajar ➔'),
                   const SizedBox(height: 12),
-                  const ContinueLearningCard(), 
+                  const ContinueLearningCard(),
 
                   const SizedBox(height: 24),
 
                   _buildSectionTitle('Misi Harian Fauzan ➔'),
                   const SizedBox(height: 12),
-                  const DailyMissionCard(), 
+                  const DailyMissionCard(),
 
                   const SizedBox(height: 24),
 
                   _buildSectionTitle('Pembelian Program Belajar ➔'),
                   const SizedBox(height: 12),
-                  const CourseCatalogList(), 
+                  const CourseCatalogList(),
                   
                   const SizedBox(height: 24),
 
                   _buildSectionTitle('Jadwal Live Terdekat ➔'),
                   const SizedBox(height: 12),
-                  const LiveScheduleList(), 
+                  const LiveScheduleList(),
                   
                   const SizedBox(height: 24),
 
                   _buildSectionTitle('Apa Kata Mereka?'),
                   const SizedBox(height: 12),
-                  const TestimonialList(), 
+                  const TestimonialList(),
                 ],
               ),
             ),
