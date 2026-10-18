@@ -102,49 +102,6 @@ class StudyMissionCard extends StatelessWidget {
   }
 }
 
-class TopicRecommendationList extends StatelessWidget {
-  const TopicRecommendationList({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 90,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        clipBehavior: Clip.none,
-        children: [
-          _buildTopicCard('Perkuat\nkelemahan:\nPenalaran\nMatematika', Icons.grid_view, Colors.blue),
-          _buildTopicCard('Target Ulang:\nPenalaran\nUmum', Icons.lightbulb_outline, Colors.blue),
-          _buildTopicCard('Tinjau\nKembali:\nLogika Dasar', Icons.refresh, Colors.orange),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopicCard(String title, IconData icon, Color iconColor) {
-    return Container(
-      width: 130,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white, 
-        borderRadius: BorderRadius.circular(16), 
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-      ),
-      child: Stack(
-        children: [
-          Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, height: 1.2)),
-          Positioned(
-            right: 0, 
-            bottom: 0,
-            child: Icon(icon, color: iconColor.withOpacity(0.6), size: 18),
-          )
-        ],
-      ),
-    );
-  }
-}
 
 class UpcomingScheduleCard extends StatelessWidget {
   const UpcomingScheduleCard({super.key});
