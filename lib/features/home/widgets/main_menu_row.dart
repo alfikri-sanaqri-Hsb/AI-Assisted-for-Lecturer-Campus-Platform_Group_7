@@ -25,16 +25,16 @@ class MainMenuRow extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: const Color.fromARGB(255, 10, 147, 226).withOpacity(0.6),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.5),
+              color: const Color.fromARGB(255, 32, 85, 230).withOpacity(0.6),
               width: 1,
             ),
           ),
           child: Icon(
             icon,
-            color: Colors.white,
+            color: const Color.fromARGB(255, 253, 253, 253),
             size: 28,
           ),
         ),
@@ -42,7 +42,7 @@ class MainMenuRow extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: Colors.white,
+            color: Color.fromARGB(255, 0, 0, 0),
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
