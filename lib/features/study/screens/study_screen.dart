@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../../core/constants/design_tokens.dart';
 import '../providers/study_provider.dart';
-import '../widgets/study_header.dart';
-import '../widgets/study_components.dart';
+import '../services/study_content_service.dart';
+import '../../tryout/screens/tryout_screen.dart';
+import '../widgets/continue_learning_section.dart';
+import '../widgets/daily_missions_section.dart';
+import '../widgets/quick_access_section.dart';
+import '../widgets/study_header.dart'; // header versi A (tetap)
+import '../widgets/study_tips_section.dart';
+import '../widgets/topic_recommendations_section.dart';
+import '../widgets/upcoming_schedule_section.dart';
 
 class StudyScreen extends StatelessWidget {
   const StudyScreen({super.key});
 
+  /// Tinggi area header berlatar header_bg.jpeg. Sesuaikan jika perlu.
+  static const double _headerHeight = 160;
+
+  /// Ruang kosong di bawah agar konten tidak tertutup bottom nav versi A.
+  static const double _bottomNavSpace = 80;
+
   @override
   Widget build(BuildContext context) {
-    final studyProvider = Provider.of<StudyProvider>(context);
+    final provider = context.watch<StudyProvider>();
+
+    // Rekomendasi topik membaca data Drift (Tugas #9).
+    // Jika database masih kosong, pakai data cadangan.
+    final topics = provider.studyItems.isEmpty
+        ? StudyContentService.topics
+        : StudyContentService.topicsFromDb(provider.studyItems);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: DS.background,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -22,7 +43,7 @@ class StudyScreen extends StatelessWidget {
             elevation: 0,
             backgroundColor: const Color(0xFF48B5FF),
             toolbarHeight: 95,
-            expandedHeight: 400,
+            expandedHeight: _headerHeight,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
@@ -34,33 +55,19 @@ class StudyScreen extends StatelessWidget {
               child: StudyHeader(),
             ),
             centerTitle: false,
-            flexibleSpace: FlexibleSpaceBar(
-              stretchModes: const [
-                StretchMode.zoomBackground,
-              ],
+            flexibleSpace: const FlexibleSpaceBar(
+              stretchModes: [StretchMode.zoomBackground],
               background: ClipRRect(
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
                 ),
-                child: Container(
-                  decoration: const BoxDecoration(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage('assets/images/header_bg.jpeg'),
                       fit: BoxFit.cover,
                       alignment: Alignment.topCenter,
-                    ),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        ContinueLearningCard(),
-                        SizedBox(height: 16),
-                        StudyMissionCard(),
-                        SizedBox(height: 30),
-                      ],
                     ),
                   ),
                 ),
@@ -69,110 +76,40 @@ class StudyScreen extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+              padding: const EdgeInsets.fromLTRB(
+                DS.screenPadding,
+                20,
+                DS.screenPadding,
+                24 + _bottomNavSpace,
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 16,
                 children: [
-                  const Text(
-                    'Rekomendasi Materi Belajar',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF2D3142),
-                    ),
+                  const ContinueLearningSection(
+                    data: StudyContentService.continueLearning,
+                    // TODO: onContinue / onDetail -> navigasi ke materi
                   ),
-                  const SizedBox(height: 20),
-                  
-                  // Menampilkan data materi dari Drift Local DB
-                  studyProvider.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : studyProvider.studyItems.isEmpty
-                          ? const Text('Belum ada data materi tersimpan.')
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              itemCount: studyProvider.studyItems.length,
-                              itemBuilder: (context, index) {
-                                final item = studyProvider.studyItems[index];
-                                final formattedTime = DateTime.fromMillisecondsSinceEpoch(
-                                  item.lastFetched,
-                                  isUtc: true,
-                                ).toLocal().toString().substring(11, 16);
-
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.03),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 2,
-                                    ),
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF48B5FF).withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.menu_book_rounded,
-                                        color: Color(0xFF48B5FF),
-                                        size: 20,
-                                      ),
-                                    ),
-                                    title: Text(
-                                      item.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: Color(0xFF2D3142),
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      item.category,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    trailing: Text(
-                                      'Diperbarui $formattedTime',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey.shade500,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-
-                  const SizedBox(height: 20),
-                  const SizedBox(height: 24),
-
-                  const UpcomingScheduleCard(),
-                  const SizedBox(height: 24),
-
-                  const StudyTipsCard(),
-                  const SizedBox(height: 24),
-
-                  const ActionMenuCard(title: 'Latihan Soal UTBK', icon: Icons.menu_book),
-                  const ActionMenuCard(title: 'TryOut Online', icon: Icons.emoji_events),
-                  const ActionMenuCard(title: 'Flashcard', icon: Icons.style_outlined),
-                  const ActionMenuCard(title: 'Bank Soal Lengkap', icon: Icons.bar_chart),
-                  
-                  const SizedBox(height: 80), 
+                  const DailyMissionsSection(
+                    missions: StudyContentService.missions,
+                    footnote: StudyContentService.missionsFootnote,
+                  ),
+                  TopicRecommendationsSection(topics: topics),
+                  const UpcomingScheduleSection(
+                    items: StudyContentService.schedule,
+                  ),
+                  const StudyTipsSection(tip: StudyContentService.tip),
+                  QuickAccessSection(
+                    items: StudyContentService.quickAccess,
+                    onItemTap: (item) {
+                      if (item.label == 'TryOut Online') {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const TryoutScreen(),
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
