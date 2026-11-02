@@ -1,43 +1,35 @@
-/**
- * MATERIAL CONTROLLER
- * Daftar materi, detail materi, dan tandai materi selesai (untuk siswa)
- */
-
-const materialModel = require('../models/material.model');
 const pool = require('../config/database');
+const materialModel = require('../models/material.model');
 const { recordActivity } = require('../models/progress.model');
 const { toWibDate } = require('../utils/streak');
 
-// is_completed dari MySQL berupa 0/1, diubah menjadi true/false
-const toMaterialResponse = (row) => ({
-  ...row,
-  is_completed: Boolean(row.is_completed),
-});
-
-// Mengembalikan angka id yang valid, atau null jika tidak valid
-const parseId = (value) => {
+function parseId(value) {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : null;
-};
+}
 
-// GET /api/materials?subject=Penalaran%20Umum
-const getMaterials = async (req, res, next) => {
+function toMaterialResponse(row) {
+  return { ...row, is_completed: Boolean(row.is_completed) };
+}
+
+// GET /api/materials?subject=...
+async function getMaterials(req, res, next) {
   try {
-    const subject = req.query.subject ? String(req.query.subject).trim() : undefined;
+    const subject = req.query.subject ? String(req.query.subject).trim() : null;
     const rows = await materialModel.findAllMaterials(req.user.id, subject);
 
-    res.status(200).json({
+    return res.json({
       success: true,
-      message: 'Daftar materi berhasil diambil',
+      message: 'Daftar materi',
       data: rows.map(toMaterialResponse),
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
-};
+}
 
 // GET /api/materials/:id
-const getMaterialById = async (req, res, next) => {
+async function getMaterialById(req, res, next) {
   try {
     const materialId = parseId(req.params.id);
     if (!materialId) {
@@ -49,15 +41,15 @@ const getMaterialById = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Materi tidak ditemukan' });
     }
 
-    res.status(200).json({
+    return res.json({
       success: true,
-      message: 'Detail materi berhasil diambil',
+      message: 'Detail materi',
       data: toMaterialResponse(row),
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
-};
+}
 
 // POST /api/materials/:id/complete
 async function completeMaterial(req, res, next) {
@@ -67,14 +59,14 @@ async function completeMaterial(req, res, next) {
       return res.status(400).json({ success: false, message: 'ID materi tidak valid' });
     }
 
-    const material = await materialModel.findMaterialById(req.user.id, materialId);
-    if (!material) {
+    const row = await materialModel.findMaterialById(req.user.id, materialId);
+    if (!row) {
       return res.status(404).json({ success: false, message: 'Materi tidak ditemukan' });
     }
 
     await materialModel.markMaterialCompleted(req.user.id, materialId);
 
-    // Selesai materi juga dihitung sebagai aktivitas belajar (streak)
+    // Selesai materi dihitung sebagai aktivitas belajar (streak)
     await recordActivity(pool, req.user.id, toWibDate());
 
     return res.json({
@@ -86,3 +78,5 @@ async function completeMaterial(req, res, next) {
     next(err);
   }
 }
+
+module.exports = { getMaterials, getMaterialById, completeMaterial };

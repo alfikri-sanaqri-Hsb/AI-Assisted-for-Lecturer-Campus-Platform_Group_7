@@ -12,7 +12,15 @@ const userRoutes = require('./src/routes/user.routes');
 const materialRoutes = require('./src/routes/material.routes');
 const tryoutRoutes = require('./src/routes/tryout.routes');
 const progressRoutes = require('./src/routes/progress.routes');
+const homeRoutes = require('./src/routes/home.routes');
+const rankingRoutes = require('./src/routes/ranking.routes');
+const settingsRoutes = require('./src/routes/settings.routes');
+const practiceRoutes = require('./src/routes/practice.routes');
+const videoRoutes = require('./src/routes/video.routes');
+const subscriptionRoutes = require('./src/routes/subscription.routes');
+const feedbackRoutes = require('./src/routes/feedback.routes');
 const errorHandler = require('./src/middleware/error.middleware');
+const mentorRoutes = require('./src/routes/mentor.routes');
 
 // Mengimpor database agar koneksi dicek saat server start
 require('./src/config/database');
@@ -47,6 +55,14 @@ app.use('/api/users', userRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/tryouts', tryoutRoutes);
 app.use('/api/progress', progressRoutes);
+app.use('/api/home', homeRoutes);
+app.use('/api/ranking', rankingRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/practice', practiceRoutes);
+app.use('/api/videos', videoRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/mentors', mentorRoutes);
 
 // 4. 404: jika tidak ada route yang cocok
 app.use((req, res) => {

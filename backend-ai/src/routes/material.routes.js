@@ -1,27 +1,14 @@
-/**
- * MATERIAL ROUTES
- * Semua route materi wajib login (Bearer token)
- */
-
 const express = require('express');
+const authMiddleware = require('../middleware/auth.middleware');
+const requireRole = require('../middleware/role.middleware');
+const materialController = require('../controllers/material.controller');
+
 const router = express.Router();
 
-const authMiddleware = require('../middleware/auth.middleware');
-const {
-  getMaterials,
-  getMaterialById,
-  completeMaterial,
-} = require('../controllers/material.controller');
+router.use(authMiddleware, requireRole('student'));
 
-router.use(authMiddleware);
-
-// GET /api/materials
-router.get('/', getMaterials);
-
-// GET /api/materials/:id
-router.get('/:id', getMaterialById);
-
-// POST /api/materials/:id/complete
-router.post('/:id/complete', completeMaterial);
+router.get('/', materialController.getMaterials);
+router.get('/:id', materialController.getMaterialById);
+router.post('/:id/complete', materialController.completeMaterial);
 
 module.exports = router;

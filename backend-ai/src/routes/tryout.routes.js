@@ -1,14 +1,15 @@
 const express = require('express');
 const authMiddleware = require('../middleware/auth.middleware');
-const c = require('../controllers/tryout.controller');
+const requireRole = require('../middleware/role.middleware');
+const tryoutController = require('../controllers/tryout.controller');
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(authMiddleware, requireRole('student'));
 
-router.get('/', c.getTryouts);                        // GET  daftar tryout
-router.get('/attempts/:attemptId', c.getAttemptResult); // GET  lihat hasil lagi
-router.get('/:id/questions', c.getTryoutQuestions);   // GET  soal (tanpa kunci)
-router.post('/:id/submit', c.submitTryout);           // POST kirim jawaban, dapat nilai
+router.get('/', tryoutController.getTryouts);
+router.get('/attempts/:attemptId', tryoutController.getAttemptResult);
+router.get('/:id/questions', tryoutController.getTryoutQuestions);
+router.post('/:id/submit', tryoutController.submitTryout);
 
 module.exports = router;

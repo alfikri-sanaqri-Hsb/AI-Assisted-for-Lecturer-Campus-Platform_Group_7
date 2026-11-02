@@ -48,62 +48,72 @@ const getDashboard = async (req, res, next) => {
 };
 
 // PUT /api/users/profile
-const updateProfile = async (req, res, next) => {
+async function updateProfile(req, res, next) {
   try {
     const userId = req.user.id;
-    const { fullName, phoneNumber, dateOfBirth, major, profilePicture } = req.body;
 
-    const validationError = validateProfileInput({ fullName, dateOfBirth });
-    if (validationError) {
-      return res.status(400).json({ success: false, message: validationError });
+    const {
+      full_name: fullName,
+      nickname,
+      phone_number: phoneNumber,
+      date_of_birth: dateOfBirth,
+      major,
+      university,
+      profile_picture: profilePicture,
+    } = req.body;
+
+    if (fullName !== undefined && String(fullName).trim() === '') {
+      return res.status(400).json({ success: false, message: 'Nama lengkap tidak boleh kosong' });
+    }
+    if (nickname !== undefined && nickname !== null && String(nickname).length > 50) {
+      return res.status(400).json({ success: false, message: 'Nama panggilan maksimal 50 karakter' });
     }
 
-    const profile = await userModel.findUserProfile(userId);
-    if (!profile) {
-      return res.status(404).json({ success: false, message: 'Profil tidak ditemukan' });
-    }
+    const emptyToNull = (value) => (value === '' ? null : value);
 
     await userModel.updateUserProfile(userId, {
       full_name: fullName === undefined ? undefined : String(fullName).trim(),
+      nickname: emptyToNull(nickname),
       phone_number: emptyToNull(phoneNumber),
       date_of_birth: emptyToNull(dateOfBirth),
       major: emptyToNull(major),
+      university: emptyToNull(university),
       profile_picture: emptyToNull(profilePicture),
     });
 
-    const updated = await userModel.getDashboardData(userId);
+    const profile = await userModel.findUserProfile(userId);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: 'Profil berhasil diupdate',
-      data: updated,
+      message: 'Profil berhasil diperbarui',
+      data: profile,
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
-};
+}
 
 // PUT /api/users/password
 const changePassword = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { currentPassword, newPassword } = req.body;
+    const { current_password, new_password } = req.body;
 
-    if (!currentPassword || !newPassword) {
+    if (!current_password || !new_password) {
       return res.status(400).json({
         success: false,
         message: 'Password lama dan password baru wajib diisi',
       });
     }
 
-    if (String(newPassword).length < MIN_PASSWORD_LENGTH) {
+    if (String(new_password).length < MIN_PASSWORD_LENGTH) {
       return res.status(400).json({
         success: false,
         message: `Password baru minimal ${MIN_PASSWORD_LENGTH} karakter`,
       });
     }
 
-    if (currentPassword === newPassword) {
+    if (current_password === new_password) {
       return res.status(400).json({
         success: false,
         message: 'Password baru harus berbeda dari password lama',
@@ -116,12 +126,12 @@ const changePassword = async (req, res, next) => {
     }
 
     // Sengaja 400, bukan 401. Aplikasi Flutter akan logout otomatis saat menerima 401.
-    const isCurrentPasswordValid = await comparePassword(String(currentPassword), user.password_hash);
+    const isCurrentPasswordValid = await comparePassword(String(current_password), user.password_hash);
     if (!isCurrentPasswordValid) {
       return res.status(400).json({ success: false, message: 'Password lama tidak sesuai' });
     }
 
-    const newPasswordHash = await hashPassword(String(newPassword));
+    const newPasswordHash = await hashPassword(String(new_password));
     await userModel.updatePasswordHash(userId, newPasswordHash);
 
     res.status(200).json({ success: true, message: 'Password berhasil diubah' });

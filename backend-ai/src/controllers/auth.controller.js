@@ -12,7 +12,7 @@ const MIN_PASSWORD_LENGTH = 6;
 
 const register = async (req, res, next) => {
   try {
-    const { email, password, fullName } = req.body;
+    const { email, password, full_name: fullName } = req.body;
 
     if (!email || !password || !fullName) {
       return res.status(400).json({
@@ -93,12 +93,12 @@ const login = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Akun tidak aktif' });
     }
 
-    const token = generateToken({ id: user.id, email: user.email });
+    const token = generateToken(user);
 
     res.status(200).json({
       success: true,
       message: 'Login berhasil',
-      data: { id: user.id, email: user.email, token },
+      data: { id: user.id, email: user.email, token, role: user.role || 'student' },
     });
   } catch (error) {
     next(error);
