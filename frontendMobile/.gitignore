@@ -47,9 +47,11 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
+
 .idea/
 .dart_tool/
 android/.gradle/
 android/local.properties
 *.iml
 .flutter-plugins-dependencies
+ origin/main
