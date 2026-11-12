@@ -111,4 +111,4 @@ async function getOverview(req, res, next) {
   }
 }
 
-module.exports = { getSummary, getOverview };
+module.exports = { getSummary, getOverview, buildSubjects };
