@@ -272,6 +272,30 @@ CREATE TABLE testimonials (
   INDEX idx_published (is_published)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Hasil insight AI per siswa (tampil di layar Progres mobile)
+CREATE TABLE IF NOT EXISTS ai_insights (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  output_json JSON NOT NULL,
+  provider VARCHAR(30) NOT NULL,
+  model VARCHAR(80) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_insight_user (user_id, id)
+);
+
+-- Catatan setiap pemanggilan AI (berhasil atau gagal). Isi prompt TIDAK disimpan.
+CREATE TABLE IF NOT EXISTS ai_audit_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  feature VARCHAR(40) NOT NULL,
+  status ENUM('success','invalid_output','provider_error') NOT NULL,
+  detail VARCHAR(300) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_audit_usage (user_id, feature, created_at)
+);
+
+
 
 -- =====================================================
 -- DATA AWAL (SEED)
