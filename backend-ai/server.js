@@ -21,7 +21,8 @@ const subscriptionRoutes = require('./src/routes/subscription.routes');
 const feedbackRoutes = require('./src/routes/feedback.routes');
 const errorHandler = require('./src/middleware/error.middleware');
 const mentorRoutes = require('./src/routes/mentor.routes');
- const aiRoutes = require('./src/routes/ai.routes');
+const aiRoutes = require('./src/routes/ai.routes');
+const ptnRoutes = require('./src/routes/ptn.routes');
 
 // Mengimpor database agar koneksi dicek saat server start
 require('./src/config/database');
@@ -65,6 +66,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/mentors', mentorRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/ptn', ptnRoutes);
 
 // 4. 404: jika tidak ada route yang cocok
 app.use((req, res) => {
