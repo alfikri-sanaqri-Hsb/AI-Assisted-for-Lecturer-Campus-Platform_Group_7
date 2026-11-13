@@ -345,6 +345,7 @@ INSERT INTO videos (subject, title, url, duration_minutes, sort_order, is_publis
   ('Penalaran Umum',          'Teknik Cepat Analogi Verbal',    'https://www.youtube.com/watch?v=example1', 12, 1, 1),
   ('Pengetahuan Kuantitatif', 'Rumus Aljabar yang Sering Keluar','https://www.youtube.com/watch?v=example2', 15, 1, 1),
   ('Literasi Bahasa Indonesia','Membaca Teks Saintifik',         'https://www.youtube.com/watch?v=example3', 10, 1, 1);
+
 -- ============================================================
 -- PTN: data passing grade + target pilihan siswa
 -- Tempel di bagian bawah database.sql, lalu jalankan di MySQL
