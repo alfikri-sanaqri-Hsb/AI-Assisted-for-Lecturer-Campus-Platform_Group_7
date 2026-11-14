@@ -53,7 +53,7 @@ const getProgramById = async (id) => {
 
 const listTargets = async (userId) => {
   const [rows] = await pool.query(
-    `SELECT t.id, t.program_id, p.university, p.program_name, p.degree, p.year, p.score_min, p.score_avg, p.score_max, p.source_type
+    `SELECT t.id, t.program_id, p.university, p.program_name, p.degree, p.year, p.score_min, p.score_avg, p.score_max, p.source, p.source_type
        FROM user_targets t JOIN ptn_programs p ON p.id = t.program_id
       WHERE t.user_id = ? ORDER BY t.id ASC`,
     [userId]
