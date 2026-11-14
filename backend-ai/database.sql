@@ -346,12 +346,7 @@ INSERT INTO videos (subject, title, url, duration_minutes, sort_order, is_publis
   ('Pengetahuan Kuantitatif', 'Rumus Aljabar yang Sering Keluar','https://www.youtube.com/watch?v=example2', 15, 1, 1),
   ('Literasi Bahasa Indonesia','Membaca Teks Saintifik',         'https://www.youtube.com/watch?v=example3', 10, 1, 1);
 
--- ============================================================
--- PTN: data passing grade + target pilihan siswa
--- Tempel di bagian bawah database.sql, lalu jalankan di MySQL
--- ============================================================
-
--- Data passing grade per program studi (diisi lewat CSV, lihat scripts/import-ptn.js)
+-- Data skor penerimaan per program studi (bukan 'passing grade' resmi: SNPMB tidak merilisnya) (diisi lewat CSV, lihat scripts/import-ptn.js)
 CREATE TABLE IF NOT EXISTS ptn_programs (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   university    VARCHAR(150)  NOT NULL,
@@ -359,15 +354,23 @@ CREATE TABLE IF NOT EXISTS ptn_programs (
   degree        ENUM('S1','D3','D4') NOT NULL DEFAULT 'S1',
   path          VARCHAR(30)   NOT NULL DEFAULT 'SNBT',      -- SNBT / MANDIRI
   year          SMALLINT      NOT NULL,
-  passing_score DECIMAL(6,2)  NOT NULL,                     -- nilai acuan (skala UTBK)
-  applicants    INT           NULL,                         -- jumlah peminat
-  capacity      INT           NULL,                         -- daya tampung
+  -- Skor peserta yang DITERIMA di prodi itu (data resmi SNPMB: tertinggi, rata-rata, terendah)
+  score_min     DECIMAL(6,2)  NOT NULL,                     -- skor terendah yang diterima
+  score_avg     DECIMAL(6,2)  NOT NULL,                     -- skor rata-rata yang diterima
+  score_max     DECIMAL(6,2)  NOT NULL,                     -- skor tertinggi yang diterima
+  -- Persentase peserta diterima menurut urutan pilihan (boleh kosong kalau datanya tidak ada)
+  pct_choice1   DECIMAL(5,2)  NULL,
+  pct_choice2   DECIMAL(5,2)  NULL,
+  pct_choice3   DECIMAL(5,2)  NULL,
+  pct_choice4   DECIMAL(5,2)  NULL,
+  applicants    INT           NULL,                         -- jumlah peminat (opsional)
+  capacity      INT           NULL,                         -- daya tampung (opsional)
   source        VARCHAR(255)  NOT NULL,                     -- sumber data (wajib, untuk dipertanggungjawabkan)
-  is_dummy      TINYINT(1)    NOT NULL DEFAULT 0,           -- 1 = data contoh, bukan data asli
+  source_type   ENUM('resmi','komunitas','dummy') NOT NULL DEFAULT 'resmi',  -- seberapa bisa dipercaya
   created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   UNIQUE KEY uq_program (university, program_name, degree, path, year),
-  INDEX idx_score (passing_score),
+  INDEX idx_score (score_avg),
   INDEX idx_university (university)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

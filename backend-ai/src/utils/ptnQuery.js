@@ -12,7 +12,9 @@
  */
 
 const SORT_COLUMNS = {
-  skor: 'passing_score',
+  skor: 'score_avg',
+  skor_terendah: 'score_min',
+  skor_tertinggi: 'score_max',
   peminat: 'applicants',
   universitas: 'university',
   prodi: 'program_name',
