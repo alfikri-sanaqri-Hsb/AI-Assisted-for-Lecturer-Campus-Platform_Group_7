@@ -385,3 +385,14 @@ CREATE TABLE IF NOT EXISTS user_targets (
   CONSTRAINT fk_target_user    FOREIGN KEY (user_id)    REFERENCES users(id)         ON DELETE CASCADE,
   CONSTRAINT fk_target_program FOREIGN KEY (program_id) REFERENCES ptn_programs(id)  ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ptn_estimates (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT NOT NULL,
+  output_json JSON NOT NULL,
+  provider    VARCHAR(30) NOT NULL,
+  model       VARCHAR(80) NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_estimate_user (user_id, id),
+  CONSTRAINT fk_estimate_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
