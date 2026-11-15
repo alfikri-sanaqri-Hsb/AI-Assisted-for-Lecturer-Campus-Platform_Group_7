@@ -6,7 +6,7 @@ import { NAV_BY_ROLE, type NavItem } from "@/lib/navigation";
 import { ROLE_META, type Role } from "@/lib/roles";
 
 const navBase =
-  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium";
+  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150";
 
 function NavEntry({ item }: { item: NavItem }) {
   if (item.href) {
@@ -23,7 +23,7 @@ function NavEntry({ item }: { item: NavItem }) {
     <span
       aria-disabled="true"
       title="Segera tersedia"
-      className={`${navBase} cursor-not-allowed text-muted`}
+      className={`${navBase} cursor-not-allowed text-muted/60`}
     >
       <Icon name={item.icon} />
       {item.label}
@@ -44,16 +44,15 @@ export function AppShell({
   const other = ROLE_META[otherRole];
 
   return (
-    <div className="min-h-dvh bg-surface text-ink">
+    <div className="min-h-dvh bg-surface text-ink font-sans selection:bg-brand-100 selection:text-brand-800">
       <a
         href="#konten-utama"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-700 focus:shadow-card"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-600 focus:shadow-glass"
       >
         Lewati ke konten utama
       </a>
 
-      {/* Pengendali menu seluler tanpa JavaScript klien (checkbox + peer).
-          Susunan elemen ini dipakai oleh aturan fokus di globals.css. */}
+      {/* Pengendali menu seluler */}
       <input
         id="nav-toggle"
         type="checkbox"
@@ -64,27 +63,27 @@ export function AppShell({
       <label
         htmlFor="nav-toggle"
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-30 bg-slate-900/40 opacity-0 transition-opacity peer-checked:pointer-events-auto peer-checked:opacity-100 lg:hidden"
+        className="pointer-events-none fixed inset-0 z-30 bg-[#383B3F]/30 backdrop-blur-xs opacity-0 transition-opacity peer-checked:pointer-events-auto peer-checked:opacity-100 lg:hidden"
       />
 
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-line bg-white transition-[transform,visibility] duration-200 max-lg:invisible max-lg:-translate-x-full peer-checked:max-lg:visible peer-checked:max-lg:translate-x-0">
-        <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line px-5">
+      <aside className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-line/80 bg-white/85 backdrop-blur-xl transition-[transform,visibility] duration-200 max-lg:invisible max-lg:-translate-x-full peer-checked:max-lg:visible peer-checked:max-lg:translate-x-0">
+        <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line/80 px-5">
           <div className="flex items-center gap-3">
-            {/* Penanda sementara, bukan logo final */}
+            {/* Logo Brand Sahabat Alfary */}
             <span
               aria-hidden="true"
-              className="grid size-9 place-items-center rounded-xl bg-brand-700 text-sm font-bold text-white"
+              className="grid size-9 place-items-center rounded-xl bg-brand-500 text-sm font-bold text-white shadow-sm shadow-brand-500/30"
             >
               SA
             </span>
             <div className="leading-tight">
-              <p className="text-sm font-semibold">Sahabat Alfary</p>
-              <p className="text-xs text-muted">Persiapan UTBK-SNBT</p>
+              <p className="text-sm font-bold text-ink">Sahabat Alfary</p>
+              <p className="text-xs font-medium text-brand-600">Persiapan UTBK-SNBT</p>
             </div>
           </div>
           <label
             htmlFor="nav-toggle"
-            className="grid size-9 cursor-pointer place-items-center rounded-lg text-muted hover:bg-surface lg:hidden"
+            className="grid size-9 cursor-pointer place-items-center rounded-lg text-muted hover:bg-surface/80 lg:hidden"
           >
             <Icon name="close" />
             <span className="sr-only">Tutup menu navigasi</span>
@@ -111,47 +110,51 @@ export function AppShell({
           ))}
         </nav>
 
-        <div className="m-3 rounded-2xl bg-brand-50 p-4 text-xs leading-relaxed text-brand-800">
-          <p className="font-semibold">Mode pratinjau</p>
-          <p className="mt-1">
-            Autentikasi dan data nyata belum tersedia. Peran ditentukan oleh
-            alamat halaman, bukan oleh akun.
+        <div className="m-3 rounded-2xl bg-brand-50/70 border border-brand-100/70 p-4 text-xs leading-relaxed text-brand-900 backdrop-blur-xs">
+          <div className="flex items-center gap-1.5 font-semibold text-brand-700">
+            <span className="size-2 rounded-full bg-brand-500 animate-pulse" />
+            Mode Peran Dashboard
+          </div>
+          <p className="mt-1 text-ink/80">
+            Sedang aktif sebagai <strong className="text-brand-700">{meta.label}</strong>. Jelajahi antarmuka peran lainnya:
           </p>
           <Link
             href={other.dashboardHref}
-            className="mt-3 inline-flex rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-brand-700 shadow-card hover:bg-brand-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-semibold text-brand-600 shadow-xs hover:bg-white hover:text-brand-700 hover:shadow transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
           >
-            Lihat tampilan {other.label}
+            Buka tampilan {other.label} &rarr;
           </Link>
         </div>
       </aside>
 
       <div className="app-main lg:pl-72">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white px-4 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line/80 bg-white/80 backdrop-blur-md px-4 sm:px-6 lg:px-8">
           <label
             htmlFor="nav-toggle"
-            className="menu-button -ml-1 grid size-10 cursor-pointer place-items-center rounded-xl text-ink hover:bg-surface lg:hidden"
+            className="menu-button -ml-1 grid size-10 cursor-pointer place-items-center rounded-xl text-ink hover:bg-surface/80 lg:hidden"
           >
             <Icon name="menu" />
             <span className="sr-only">Buka menu navigasi</span>
           </label>
 
-          <p className="mr-auto text-sm font-semibold sm:text-base">
-            {meta.panelTitle}
-          </p>
+          <div className="mr-auto">
+            <p className="text-sm font-semibold sm:text-base text-ink">
+              {meta.panelTitle}
+            </p>
+          </div>
 
-          {/* Pencarian visual: sengaja nonaktif sampai fitur tersedia */}
+          {/* Pencarian visual header */}
           <div className="hidden w-72 md:block lg:w-80">
             <label className="relative block">
-              <span className="sr-only">Pencarian (belum aktif)</span>
+              <span className="sr-only">Pencarian global</span>
               <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-muted">
                 <Icon name="search" className="size-4" />
               </span>
               <input
                 type="search"
                 disabled
-                placeholder="Pencarian segera tersedia"
-                className="h-10 w-full cursor-not-allowed rounded-xl border border-line bg-surface pl-9 pr-3 text-sm placeholder:text-muted"
+                placeholder="Cari siswa, materi, soal..."
+                className="h-10 w-full cursor-not-allowed rounded-xl border border-line bg-white/60 pl-9 pr-3 text-sm placeholder:text-muted/70 backdrop-blur-xs"
               />
             </label>
           </div>
@@ -159,23 +162,23 @@ export function AppShell({
           <button
             type="button"
             disabled
-            aria-label="Notifikasi (belum aktif)"
+            aria-label="Notifikasi (segera aktif)"
             title="Notifikasi segera tersedia"
-            className="grid size-10 cursor-not-allowed place-items-center rounded-xl border border-line text-muted"
+            className="grid size-10 cursor-not-allowed place-items-center rounded-xl border border-line/80 bg-white/60 text-muted backdrop-blur-xs hover:text-ink transition-colors"
           >
             <Icon name="bell" />
           </button>
 
-          {/* Profil contoh, bukan pengguna sungguhan */}
-          <div className="flex items-center gap-3 border-l border-line pl-3 sm:pl-4">
+          {/* Profil */}
+          <div className="flex items-center gap-3 border-l border-line/80 pl-3 sm:pl-4">
             <span
               aria-hidden="true"
-              className="grid size-10 place-items-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700"
+              className="grid size-10 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-700 ring-2 ring-brand-500/20"
             >
               {meta.sampleUser.initials}
             </span>
             <div className="hidden leading-tight sm:block">
-              <p className="text-sm font-semibold">{meta.sampleUser.name}</p>
+              <p className="text-sm font-semibold text-ink">{meta.sampleUser.name}</p>
               <p className="text-xs text-muted">{meta.sampleUser.roleNote}</p>
             </div>
           </div>

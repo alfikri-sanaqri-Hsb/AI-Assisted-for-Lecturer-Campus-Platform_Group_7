@@ -11,8 +11,9 @@ export type NavItem = {
 export type NavGroup = { title: string; items: NavItem[] };
 
 /**
- * Satu-satunya sumber menu. Untuk mengaktifkan sebuah menu setelah
- * halamannya dibuat, cukup tambahkan `href` di sini.
+ * STRUKTUR SIDEBAR RESMI SAHABAT ALFARY (BAGIAN 4 DIRECTIVE)
+ *
+ * Seluruh menu utama terhubung ke rute fungsional masing-masing.
  */
 export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
   admin: [
@@ -23,26 +24,26 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
     {
       title: "Pengguna",
       items: [
-        { label: "Siswa", icon: "users" },
-        { label: "Daftar Mentor", icon: "mentor" },
+        { label: "Siswa", icon: "users", href: "/admin/students" },
+        { label: "Daftar Mentor", icon: "mentor", href: "/admin/mentors" },
       ],
     },
     {
       title: "Akademik",
       items: [
-        { label: "Materi Pembelajaran", icon: "book" },
-        { label: "Bank Soal", icon: "file" },
-        { label: "Paket Tryout", icon: "clipboard" },
-        { label: "Jadwal", icon: "calendar" },
+        { label: "Materi Pembelajaran", icon: "book", href: "/admin/materials" },
+        { label: "Bank Soal", icon: "file", href: "/admin/question-bank" },
+        { label: "Paket TryOut", icon: "clipboard", href: "/admin/tryout-packages" },
+        { label: "Jadwal", icon: "calendar", href: "/admin/schedules" },
       ],
     },
     {
       title: "Konten",
-      items: [{ label: "Peninjauan Konten", icon: "review" }],
+      items: [{ label: "Peninjauan Konten", icon: "review", href: "/admin/content-review" }],
     },
     {
       title: "Pengaturan",
-      items: [{ label: "Pengaturan", icon: "settings" }],
+      items: [{ label: "Pengaturan", icon: "settings", href: "/admin/settings" }],
     },
   ],
   mentor: [
@@ -52,20 +53,20 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
     },
     {
       title: "Pengguna",
-      items: [{ label: "Siswa Binaan", icon: "users" }],
+      items: [{ label: "Siswa Binaan", icon: "users", href: "/mentor/students" }],
     },
     {
       title: "Akademik",
       items: [
-        { label: "Materi Pembelajaran", icon: "book" },
-        { label: "Bank Soal", icon: "file" },
-        { label: "Paket Tryout", icon: "clipboard" },
-        { label: "Jadwal", icon: "calendar" },
+        { label: "Materi Pembelajaran", icon: "book", href: "/mentor/materials" },
+        { label: "Bank Soal", icon: "file", href: "/mentor/question-bank" },
+        { label: "Paket TryOut", icon: "clipboard", href: "/mentor/tryout-packages" },
+        { label: "Jadwal", icon: "calendar", href: "/mentor/schedules" },
       ],
     },
     {
       title: "Akun",
-      items: [{ label: "Profil", icon: "profile" }],
+      items: [{ label: "Profil", icon: "profile", href: "/mentor/profile" }],
     },
   ],
 };

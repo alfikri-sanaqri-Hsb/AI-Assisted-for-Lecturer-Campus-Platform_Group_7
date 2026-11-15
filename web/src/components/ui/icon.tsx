@@ -93,6 +93,54 @@ const iconPaths = {
       <path d="M3 13v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-5l-1 2h-6l-1-2H3Z" />
     </>
   ),
+  plus: <path d="M12 5v14M5 12h14" />,
+  edit: (
+    <>
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  "chevron-down": <path d="m6 9 6 6 6-6" />,
+  "chevron-up": <path d="m18 15-6-6-6 6" />,
+  "chevron-left": <path d="m15 18-6-6 6-6" />,
+  "chevron-right": <path d="m9 18 6-6 6-6" />,
+  filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />,
+  check: <polyline points="20 6 9 17 4 12" />,
+  alert: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+      <path d="M3 21v-5h5" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof iconPaths;
