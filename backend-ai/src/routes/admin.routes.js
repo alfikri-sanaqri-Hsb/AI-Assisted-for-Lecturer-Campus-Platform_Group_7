@@ -7,6 +7,9 @@ const router = express.Router();
 
 router.use(authMiddleware, requireRole('admin'));
 router.get('/dashboard', adminController.getDashboard);
+router.get('/students', adminController.listStudents);
+router.get('/mentors', adminController.listMentors);
+
 const adminTryoutController = require('../controllers/admin.tryout.controller');
 
 router.get('/tryouts', adminTryoutController.listTryouts);
