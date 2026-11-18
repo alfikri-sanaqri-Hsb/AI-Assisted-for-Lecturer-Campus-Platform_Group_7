@@ -1,15 +1,16 @@
 const pool = require('../config/database');
 
+// Siswa hanya melihat materi yang sudah TERBIT (is_published = 1) dan membawa link materinya (content_url)
 async function findAllMaterials(userId, subject) {
   const params = [userId];
-  let where = '';
+  let where = 'WHERE m.is_published = 1';
   if (subject) {
-    where = 'WHERE m.subject = ?';
+    where += ' AND m.subject = ?';
     params.push(subject);
   }
 
   const [rows] = await pool.query(
-    `SELECT m.id, m.subject, m.title, m.description, m.image_url,
+    `SELECT m.id, m.subject, m.title, m.description, m.content_url, m.image_url,
             m.estimated_minutes, m.sort_order,
             (p.id IS NOT NULL) AS is_completed
      FROM materials m
@@ -24,13 +25,13 @@ async function findAllMaterials(userId, subject) {
 
 async function findMaterialById(userId, materialId) {
   const [rows] = await pool.query(
-    `SELECT m.id, m.subject, m.title, m.description, m.image_url,
+    `SELECT m.id, m.subject, m.title, m.description, m.content_url, m.image_url,
             m.estimated_minutes, m.sort_order,
             (p.id IS NOT NULL) AS is_completed
      FROM materials m
      LEFT JOIN user_material_progress p
        ON p.material_id = m.id AND p.user_id = ?
-     WHERE m.id = ?`,
+     WHERE m.id = ? AND m.is_published = 1`,
     [userId, materialId]
   );
   return rows[0] || null;

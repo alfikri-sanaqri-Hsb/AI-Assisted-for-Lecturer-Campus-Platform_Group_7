@@ -24,6 +24,7 @@ const mentorRoutes = require('./src/routes/mentor.routes');
 const aiRoutes = require('./src/routes/ai.routes');
 const ptnRoutes = require('./src/routes/ptn.routes');
 const adminRoutes = require('./src/routes/admin.routes');
+const mentorPanelRoutes = require('./src/routes/mentor.panel.routes');
 
 // Mengimpor database agar koneksi dicek saat server start
 require('./src/config/database');
@@ -69,6 +70,7 @@ app.use('/api/mentors', mentorRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/ptn', ptnRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/panel/mentor', mentorPanelRoutes);
 
 // 4. 404: jika tidak ada route yang cocok
 app.use((req, res) => {

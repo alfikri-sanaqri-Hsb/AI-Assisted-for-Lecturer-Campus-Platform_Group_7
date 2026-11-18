@@ -3,6 +3,9 @@
 -- Deskripsi: Platform bimbingan belajar persiapan PTN
 -- =====================================================
 
+-- PERINGATAN: file ini MENGHAPUS database lama lalu membuatnya ulang (semua data hilang).
+-- Hanya untuk database baru / development. Untuk database yang sudah berisi data,
+-- pakai file di folder database/migrations/ (tidak menghapus apa pun).
 DROP DATABASE IF EXISTS sahabat_alfary;
 
 CREATE DATABASE sahabat_alfary
@@ -91,11 +94,18 @@ CREATE TABLE materials (
   estimated_minutes INT          DEFAULT 0,
   sort_order        INT          NOT NULL DEFAULT 0,
   is_published      TINYINT(1)   NOT NULL DEFAULT 1,
+  -- alur review materi (admin/mentor): draft -> pending_review -> approved -> published
+  content_url       VARCHAR(500) NULL,                       -- link materi (YouTube/Drive/artikel)
+  status            ENUM('draft','pending_review','approved','published') NOT NULL DEFAULT 'published',
+  author_id         INT          NULL,                       -- mentor penulis (users.id)
+  review_note       TEXT         NULL,                       -- catatan saat ditolak
+  reviewed_at       TIMESTAMP    NULL,
   created_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   INDEX idx_subject    (subject),
-  INDEX idx_sort_order (sort_order)
+  INDEX idx_sort_order (sort_order),
+  CONSTRAINT fk_materials_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -272,8 +282,9 @@ CREATE TABLE testimonials (
   INDEX idx_published (is_published)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
 -- Hasil insight AI per siswa (tampil di layar Progres mobile)
-CREATE TABLE IF NOT EXISTS ai_insights (
+CREATE TABLE ai_insights (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   output_json JSON NOT NULL,
@@ -282,10 +293,10 @@ CREATE TABLE IF NOT EXISTS ai_insights (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_insight_user (user_id, id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Catatan setiap pemanggilan AI (berhasil atau gagal). Isi prompt TIDAK disimpan.
-CREATE TABLE IF NOT EXISTS ai_audit_logs (
+CREATE TABLE ai_audit_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NULL,
   feature VARCHAR(40) NOT NULL,
@@ -293,9 +304,139 @@ CREATE TABLE IF NOT EXISTS ai_audit_logs (
   detail VARCHAR(300) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_audit_usage (user_id, feature, created_at)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
+-- =====================================================
+-- PTN: data skor penerimaan
+-- =====================================================
+-- Data skor penerimaan per program studi (bukan 'passing grade' resmi: SNPMB tidak merilisnya) (diisi lewat CSV, lihat scripts/import-ptn.js)
+CREATE TABLE ptn_programs (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  university    VARCHAR(150)  NOT NULL,
+  program_name  VARCHAR(150)  NOT NULL,
+  degree        ENUM('S1','D3','D4') NOT NULL DEFAULT 'S1',
+  path          VARCHAR(30)   NOT NULL DEFAULT 'SNBT',      -- SNBT / MANDIRI
+  year          SMALLINT      NOT NULL,
+  -- Skor peserta yang DITERIMA di prodi itu (data resmi SNPMB: tertinggi, rata-rata, terendah)
+  score_min     DECIMAL(6,2)  NOT NULL,                     -- skor terendah yang diterima
+  score_avg     DECIMAL(6,2)  NOT NULL,                     -- skor rata-rata yang diterima
+  score_max     DECIMAL(6,2)  NOT NULL,                     -- skor tertinggi yang diterima
+  -- Persentase peserta diterima menurut urutan pilihan (boleh kosong kalau datanya tidak ada)
+  pct_choice1   DECIMAL(5,2)  NULL,
+  pct_choice2   DECIMAL(5,2)  NULL,
+  pct_choice3   DECIMAL(5,2)  NULL,
+  pct_choice4   DECIMAL(5,2)  NULL,
+  applicants    INT           NULL,                         -- jumlah peminat (opsional)
+  capacity      INT           NULL,                         -- daya tampung (opsional)
+  source        VARCHAR(255)  NOT NULL,                     -- sumber data (wajib, untuk dipertanggungjawabkan)
+  source_type   ENUM('resmi','komunitas','dummy') NOT NULL DEFAULT 'resmi',  -- seberapa bisa dipercaya
+  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_program (university, program_name, degree, path, year),
+  INDEX idx_score (score_avg),
+  INDEX idx_university (university)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Program yang dipilih siswa sebagai target (maksimal 3 per siswa, dicek di backend)
+CREATE TABLE user_targets (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT NOT NULL,
+  program_id  INT NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_user_program (user_id, program_id),
+  CONSTRAINT fk_target_user    FOREIGN KEY (user_id)    REFERENCES users(id)         ON DELETE CASCADE,
+  CONSTRAINT fk_target_program FOREIGN KEY (program_id) REFERENCES ptn_programs(id)  ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ptn_estimates (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT NOT NULL,
+  output_json JSON NOT NULL,
+  provider    VARCHAR(30) NOT NULL,
+  model       VARCHAR(80) NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_estimate_user (user_id, id),
+  CONSTRAINT fk_estimate_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- FEEDBACK
+--    Masukan siswa dari aplikasi
+-- =====================================================
+CREATE TABLE feedback (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NOT NULL,
+  topic      ENUM('materi','tryout','progress','kesalahan','lainnya') NOT NULL,
+  message    TEXT NOT NULL,
+  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+
+  INDEX idx_feedback_user (user_id),
+  CONSTRAINT fk_feedback_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- MENTORS
+--    Profil mentor. user_id (boleh kosong) = akun login mentor
+-- =====================================================
+CREATE TABLE mentors (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT NULL,
+  name        VARCHAR(100) NOT NULL,
+  photo_url   VARCHAR(255) NULL,
+  university  VARCHAR(100) NULL,
+  major       VARCHAR(100) NULL,
+  bio         TEXT,
+  subjects    VARCHAR(255) NULL,
+  group_url   VARCHAR(255) NULL,                -- link grup (WhatsApp/Telegram)
+  is_featured TINYINT(1) NOT NULL DEFAULT 0,
+  is_active   TINYINT(1) NOT NULL DEFAULT 1,
+  created_at  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_mentors_user (user_id),
+  CONSTRAINT fk_mentors_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- MENTOR_SESSIONS
+--    Jadwal sesi live mentor (link Zoom/Meet)
+-- =====================================================
+CREATE TABLE mentor_sessions (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  mentor_id        INT NOT NULL,
+  title            VARCHAR(150) NOT NULL,
+  starts_at        DATETIME NOT NULL,
+  duration_minutes INT NOT NULL DEFAULT 60,
+  meeting_url      VARCHAR(255) NULL,
+  is_active        TINYINT(1) NOT NULL DEFAULT 1,
+  created_at       TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+
+  INDEX idx_session_mentor (mentor_id),
+  CONSTRAINT fk_session_mentor FOREIGN KEY (mentor_id) REFERENCES mentors(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- SUBSCRIPTION_ORDERS
+--    Pesanan langganan premium (simulasi pembayaran).
+--    UNIQUE (user_id, idempotency_key) mencegah bayar dobel.
+-- =====================================================
+CREATE TABLE subscription_orders (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  user_id         INT NOT NULL,
+  idempotency_key VARCHAR(100) NULL,
+  request_hash    CHAR(64) NULL,
+  plan_name       VARCHAR(100) NOT NULL,
+  duration_months INT NOT NULL,
+  amount          INT NOT NULL,
+  payment_method  VARCHAR(30) NOT NULL,
+  status          ENUM('pending','paid','failed') NOT NULL DEFAULT 'pending',
+  paid_at         DATETIME NULL,
+  created_at      TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_order_idem (user_id, idempotency_key),
+  CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
 -- DATA AWAL (SEED)
@@ -344,173 +485,3 @@ INSERT INTO testimonials (name, university, message, is_published, sort_order) V
 INSERT INTO videos (subject, title, url, duration_minutes, sort_order, is_published) VALUES
   ('Penalaran Umum',          'Teknik Cepat Analogi Verbal',    'https://www.youtube.com/watch?v=example1', 12, 1, 1),
   ('Pengetahuan Kuantitatif', 'Rumus Aljabar yang Sering Keluar','https://www.youtube.com/watch?v=example2', 15, 1, 1),
-  ('Literasi Bahasa Indonesia','Membaca Teks Saintifik',         'https://www.youtube.com/watch?v=example3', 10, 1, 1);
-
--- Data skor penerimaan per program studi (bukan 'passing grade' resmi: SNPMB tidak merilisnya) (diisi lewat CSV, lihat scripts/import-ptn.js)
-CREATE TABLE IF NOT EXISTS ptn_programs (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  university    VARCHAR(150)  NOT NULL,
-  program_name  VARCHAR(150)  NOT NULL,
-  degree        ENUM('S1','D3','D4') NOT NULL DEFAULT 'S1',
-  path          VARCHAR(30)   NOT NULL DEFAULT 'SNBT',      -- SNBT / MANDIRI
-  year          SMALLINT      NOT NULL,
-  -- Skor peserta yang DITERIMA di prodi itu (data resmi SNPMB: tertinggi, rata-rata, terendah)
-  score_min     DECIMAL(6,2)  NOT NULL,                     -- skor terendah yang diterima
-  score_avg     DECIMAL(6,2)  NOT NULL,                     -- skor rata-rata yang diterima
-  score_max     DECIMAL(6,2)  NOT NULL,                     -- skor tertinggi yang diterima
-  -- Persentase peserta diterima menurut urutan pilihan (boleh kosong kalau datanya tidak ada)
-  pct_choice1   DECIMAL(5,2)  NULL,
-  pct_choice2   DECIMAL(5,2)  NULL,
-  pct_choice3   DECIMAL(5,2)  NULL,
-  pct_choice4   DECIMAL(5,2)  NULL,
-  applicants    INT           NULL,                         -- jumlah peminat (opsional)
-  capacity      INT           NULL,                         -- daya tampung (opsional)
-  source        VARCHAR(255)  NOT NULL,                     -- sumber data (wajib, untuk dipertanggungjawabkan)
-  source_type   ENUM('resmi','komunitas','dummy') NOT NULL DEFAULT 'resmi',  -- seberapa bisa dipercaya
-  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  UNIQUE KEY uq_program (university, program_name, degree, path, year),
-  INDEX idx_score (score_avg),
-  INDEX idx_university (university)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Program yang dipilih siswa sebagai target (maksimal 3 per siswa, dicek di backend)
-CREATE TABLE IF NOT EXISTS user_targets (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  user_id     INT NOT NULL,
-  program_id  INT NOT NULL,
-  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  UNIQUE KEY uq_user_program (user_id, program_id),
-  CONSTRAINT fk_target_user    FOREIGN KEY (user_id)    REFERENCES users(id)         ON DELETE CASCADE,
-  CONSTRAINT fk_target_program FOREIGN KEY (program_id) REFERENCES ptn_programs(id)  ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS ptn_estimates (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  user_id     INT NOT NULL,
-  output_json JSON NOT NULL,
-  provider    VARCHAR(30) NOT NULL,
-  model       VARCHAR(80) NOT NULL,
-  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_estimate_user (user_id, id),
-  CONSTRAINT fk_estimate_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `feedback` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `topic` enum('materi','tryout','progress','kesalahan','lainnya') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `message` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `mentors` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `photo_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `university` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `major` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `bio` text COLLATE utf8mb4_unicode_ci,
-  `subjects` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `group_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_featured` tinyint(1) NOT NULL DEFAULT '0',
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `mentor_sessions` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `mentor_id` int NOT NULL,
-  `title` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `starts_at` datetime NOT NULL,
-  `duration_minutes` int NOT NULL DEFAULT '60',
-  `meeting_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `mentor_id` (`mentor_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `ptn_estimates` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `output_json` json NOT NULL,
-  `provider` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `model` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_estimate_user` (`user_id`,`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `ptn_programs` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `university` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `program_name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `degree` enum('S1','D3','D4') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'S1',
-  `path` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'SNBT',
-  `year` smallint NOT NULL,
-  `score_min` decimal(6,2) NOT NULL,
-  `score_avg` decimal(6,2) NOT NULL,
-  `score_max` decimal(6,2) NOT NULL,
-  `pct_choice1` decimal(5,2) DEFAULT NULL,
-  `pct_choice2` decimal(5,2) DEFAULT NULL,
-  `pct_choice3` decimal(5,2) DEFAULT NULL,
-  `pct_choice4` decimal(5,2) DEFAULT NULL,
-  `applicants` int DEFAULT NULL,
-  `capacity` int DEFAULT NULL,
-  `source` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `source_type` enum('resmi','komunitas','dummy') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'resmi',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_program` (`university`,`program_name`,`degree`,`path`,`year`),
-  KEY `idx_score` (`score_avg`),
-  KEY `idx_university` (`university`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `subscription_orders` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `idempotency_key` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `request_hash` char(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `plan_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `duration_months` int NOT NULL,
-  `amount` int NOT NULL,
-  `payment_method` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `status` enum('pending','paid','failed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
-  `paid_at` datetime DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_order_idem` (`user_id`,`idempotency_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `user_targets` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `program_id` int NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_user_program` (`user_id`,`program_id`),
-  KEY `fk_target_program` (`program_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-ALTER TABLE `feedback`
-  ADD CONSTRAINT `feedback_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `mentor_sessions`
-  ADD CONSTRAINT `mentor_sessions_ibfk_1` FOREIGN KEY (`mentor_id`) REFERENCES `mentors` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `ptn_estimates`
-  ADD CONSTRAINT `fk_estimate_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `subscription_orders`
-  ADD CONSTRAINT `subscription_orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `user_targets`
-  ADD CONSTRAINT `fk_target_program` FOREIGN KEY (`program_id`) REFERENCES `ptn_programs` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_target_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-COMMIT;
