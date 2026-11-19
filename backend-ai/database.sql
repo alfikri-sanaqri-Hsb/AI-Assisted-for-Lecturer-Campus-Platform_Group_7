@@ -25,6 +25,7 @@ CREATE TABLE users (
   role          ENUM('student', 'mentor', 'admin') NOT NULL DEFAULT 'student',
   status        VARCHAR(50)  NOT NULL DEFAULT 'active',
   is_premium    TINYINT(1)   NOT NULL DEFAULT 0,
+  premium_until DATETIME     NULL,                -- batas akhir premium (diisi saat pembayaran berhasil)
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
