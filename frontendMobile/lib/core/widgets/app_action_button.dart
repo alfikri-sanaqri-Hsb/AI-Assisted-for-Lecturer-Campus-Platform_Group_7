@@ -13,17 +13,30 @@ class AppActionButton extends StatelessWidget {
     this.onPressed,
     this.variant = AppActionVariant.filled,
     this.height = 40,
+    this.foreground,
+    this.leading,
+    this.trailing,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final AppActionVariant variant;
   final double height;
+  final Color? foreground; // warna teks varian outlined (default biru)
+  final Widget? leading; // ikon di kiri teks
+  final Widget? trailing; // ikon di kanan teks
 
   @override
   Widget build(BuildContext context) {
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
     final callback = onPressed ?? _noop;
+    final Widget content = (leading == null && trailing == null)
+        ? Text(label)
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 6,
+            children: [?leading, Text(label), ?trailing],
+          );
 
     final Widget button = switch (variant) {
       AppActionVariant.filled => ElevatedButton(
@@ -36,7 +49,7 @@ class AppActionButton extends StatelessWidget {
             shape: shape,
             textStyle: DS.button,
           ),
-          child: Text(label),
+          child: content,
         ),
       AppActionVariant.soft => ElevatedButton(
           onPressed: callback,
@@ -48,19 +61,19 @@ class AppActionButton extends StatelessWidget {
             shape: shape,
             textStyle: DS.button,
           ),
-          child: Text(label),
+          child: content,
         ),
       AppActionVariant.outlined => OutlinedButton(
           onPressed: callback,
           style: OutlinedButton.styleFrom(
             backgroundColor: Colors.white,
-            foregroundColor: DS.primary,
+            foregroundColor: foreground ?? DS.primary,
             side: const BorderSide(color: DS.border),
             padding: EdgeInsets.zero,
             shape: shape,
             textStyle: DS.button,
           ),
-          child: Text(label),
+          child: content,
         ),
     };
 

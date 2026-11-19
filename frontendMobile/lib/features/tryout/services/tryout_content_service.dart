@@ -9,6 +9,7 @@ abstract final class TryoutContentService {
     title: 'Latihan Awal UTBK 2027',
     subtitle: 'Mandiri • bisa dikerjakan kapan saja',
     registeredCount: 1,
+    backendId: 2,
   );
 
   static final items = <TryoutItem>[
@@ -22,6 +23,7 @@ abstract final class TryoutContentService {
       endsAt: DateTime(2027, 9, 17, 23, 59),
       summary: '7 subtes • 160 soal • 195 menit',
       statusNote: 'Pendaftaran dibuka',
+      backendId: 2,
     ),
     TryoutItem(
       id: 'akbar-snbt-5',

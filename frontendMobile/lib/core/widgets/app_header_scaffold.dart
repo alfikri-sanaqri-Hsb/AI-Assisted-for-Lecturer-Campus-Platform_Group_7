@@ -25,53 +25,49 @@ class AppHeaderScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final safe = MediaQuery.paddingOf(context);
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light, // ikon status bar putih
       child: Scaffold(
         backgroundColor: DS.pageBackground,
         bottomNavigationBar: bottomBar,
-        body: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Stack(
-            children: [
-              // Latar pola edukasi (ikut ter-scroll seperti di Figma).
-              const Positioned(
-                top: -19,
-                left: -20,
-                right: -20,
-                height: 793,
-                child: Image(
-                  image: AssetImage('assets/images/header_bg.jpeg'),
-                  fit: BoxFit.cover,
-                ),
+        appBar: AppBar(
+          toolbarHeight: 132,
+          titleSpacing: 0,
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          backgroundColor: DS.accent,
+          surfaceTintColor: Colors.transparent,
+          flexibleSpace: const DecoratedBox(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/header_bg.jpeg'),
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
               ),
-              Column(
-                children: [
-                  SizedBox(height: safe.top),
-                  _Header(
-                    title: title,
-                    subtitle: subtitle,
-                    onBack: onBack ?? () => Navigator.of(context).maybePop(),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      0,
-                      16,
-                      24 + (bottomBar == null ? safe.bottom : 0),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 20,
-                      children: children,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
+          title: _Header(
+            title: title,
+            subtitle: subtitle,
+            onBack: onBack ?? () => Navigator.of(context).maybePop(),
+          ),
+        ),
+        body: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            24 + (bottomBar == null ? MediaQuery.paddingOf(context).bottom : 0),
+          ),
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 20,
+              children: children,
+            ),
+          ],
         ),
       ),
     );
@@ -92,7 +88,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,
@@ -106,8 +102,11 @@ class _Header extends StatelessWidget {
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   onPressed: onBack,
-                  icon: const Icon(LucideIcons.arrowLeft,
-                      size: 26, color: Colors.white),
+                  icon: const Icon(
+                    LucideIcons.arrowLeft,
+                    size: 26,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               Expanded(child: Text(title, style: DS.pageTitle)),

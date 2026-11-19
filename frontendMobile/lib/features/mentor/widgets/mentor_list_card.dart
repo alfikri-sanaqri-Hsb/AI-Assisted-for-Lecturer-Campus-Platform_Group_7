@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/app_nav.dart';
+
 class MentorListCard extends StatelessWidget {
   final String name;
   final String rating;
@@ -69,17 +71,19 @@ class MentorListCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   specialty,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 30,
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => AppNav.mentorProfile(
+                      context,
+                      name: name,
+                      specialty: specialty,
+                      imagePath: imagePath,
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0088FF),
                       elevation: 0,

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../app/app_nav.dart';
 import '../../../core/constants/design_tokens.dart';
+import '../../learning/models/learning_models.dart';
+import '../models/study_models.dart';
 import '../providers/study_provider.dart';
 import '../services/study_content_service.dart';
-import '../../tryout/screens/tryout_screen.dart';
 import '../widgets/continue_learning_section.dart';
 import '../widgets/daily_missions_section.dart';
 import '../widgets/quick_access_section.dart';
-import '../widgets/study_header.dart'; // header versi A (tetap)
+import '../widgets/study_header.dart'; // header: AppGreetingHeader + popup profil
 import '../widgets/study_tips_section.dart';
 import '../widgets/topic_recommendations_section.dart';
 import '../widgets/upcoming_schedule_section.dart';
@@ -19,8 +21,38 @@ class StudyScreen extends StatelessWidget {
   /// Tinggi area header berlatar header_bg.jpeg. Sesuaikan jika perlu.
   static const double _headerHeight = 160;
 
-  /// Ruang kosong di bawah agar konten tidak tertutup bottom nav versi A.
+  /// Ruang kosong di bawah agar konten tidak tertutup bottom nav.
   static const double _bottomNavSpace = 80;
+
+  void _onMission(BuildContext context, DailyMission m) {
+    final topic = m.practiceTopic;
+    if (topic != null) {
+      AppNav.practice(context, topic: topic);
+    } else {
+      AppNav.flashcards(context);
+    }
+  }
+
+  void _onSchedule(BuildContext context, ScheduleItem s) {
+    if (s.isTryout) {
+      AppNav.tryouts(context);
+    } else {
+      AppNav.liveClasses(context);
+    }
+  }
+
+  void _onQuickAccess(BuildContext context, QuickAccessItem item) {
+    switch (item.id) {
+      case 'materi':
+        AppNav.materials(context);
+      case 'tryout':
+        AppNav.tryouts(context);
+      case 'bank-soal':
+        AppNav.searchMaterials(context, type: LearningType.latihan);
+      case 'flashcard':
+        AppNav.flashcards(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,31 +117,30 @@ class StudyScreen extends StatelessWidget {
               child: Column(
                 spacing: 16,
                 children: [
-                  const ContinueLearningSection(
-                    data: StudyContentService.continueLearning,
-                    // TODO: onContinue / onDetail -> navigasi ke materi
-                  ),
-                  const DailyMissionsSection(
-                    missions: StudyContentService.missions,
-                    footnote: StudyContentService.missionsFootnote,
-                  ),
-                  TopicRecommendationsSection(topics: topics),
-                  const UpcomingScheduleSection(
-                    items: StudyContentService.schedule,
-                  ),
-                  const StudyTipsSection(tip: StudyContentService.tip),
                   QuickAccessSection(
                     items: StudyContentService.quickAccess,
-                    onItemTap: (item) {
-                      if (item.label == 'TryOut Online') {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const TryoutScreen(),
-                          ),
-                        );
-                      }
-                    },
+                    onItemTap: (item) => _onQuickAccess(context, item),
                   ),
+                  ContinueLearningSection(
+                    data: StudyContentService.continueLearning,
+                    onContinue: () => AppNav.materials(context),
+                    onDetail: () => AppNav.materials(context),
+                  ),
+                  DailyMissionsSection(
+                    missions: StudyContentService.missions,
+                    footnote: StudyContentService.missionsFootnote,
+                    onMissionTap: (m) => _onMission(context, m),
+                  ),
+                  TopicRecommendationsSection(
+                    topics: topics,
+                    onTopicTap: (t) =>
+                        AppNav.practice(context, topic: t.topic ?? t.title),
+                  ),
+                  UpcomingScheduleSection(
+                    items: StudyContentService.schedule,
+                    onItemTap: (s) => _onSchedule(context, s),
+                  ),
+                  const StudyTipsSection(tip: StudyContentService.tip),
                 ],
               ),
             ),

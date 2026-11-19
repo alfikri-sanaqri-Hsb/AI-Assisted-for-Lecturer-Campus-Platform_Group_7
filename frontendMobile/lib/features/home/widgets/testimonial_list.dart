@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TestimonialList extends StatelessWidget {
-  const TestimonialList({super.key});
+  const TestimonialList({super.key, this.items = const []});
+  final List<Map<String, dynamic>> items;
 
   @override
   Widget build(BuildContext context) {
@@ -19,30 +20,43 @@ class TestimonialList extends StatelessWidget {
         ],
       ),
       child: Column(
-        children: [
-          _buildTestimonialItem(
-            name: 'Alfikri Sanaqri Hsb',
-            university: 'STEI-K ITB',
-            message: 'Rekom banget buat adik-adik yang pengen ngejar ptn impian, materinya asik dan mudah dipahami',
-            imagePath: 'assets/images/foto_alfi.jpeg',
-          ),
-          const SizedBox(height: 16),
-          
-          _buildTestimonialItem(
-            name: 'Ryan Fikri Ramadhan',
-            university: 'Kedokteran UNDIP',
-            message: 'AYO!! yang mau lulus kayak abang, langsung saja berlangganan fitur premiumnya, WORTH IT BANGETTT! Terimakasih untuk mentor-mentor yang baikk hatiiii',
-            imagePath: 'assets/images/foto_ryan.jpeg',
-          ),
-          const SizedBox(height: 16),
-          
-          _buildTestimonialItem(
-            name: 'Fauzan',
-            university: 'Kedokteran UGM',
-            message: 'Aplikasinya sangat membantu aku lulus ke PTN impianku. Fitur misi hariannya sangat membantu aku untuk mengerjakan soal-soal setiap harinya',
-            imagePath: 'assets/images/foto_ojan.jpeg',
-          ),
-        ],
+        children: items.isEmpty
+            ? [
+                _buildTestimonialItem(
+                  name: 'Alfikri Sanaqri Hsb',
+                  university: 'STEI-K ITB',
+                  message: 'Rekom banget buat adik-adik yang pengen ngejar ptn impian, materinya asik dan mudah dipahami',
+                  imagePath: 'assets/images/foto_alfi.jpeg',
+                ),
+                const SizedBox(height: 16),
+
+                _buildTestimonialItem(
+                  name: 'Ryan Fikri Ramadhan',
+                  university: 'Kedokteran UNDIP',
+                  message: 'AYO!! yang mau lulus kayak abang, langsung saja berlangganan fitur premiumnya, WORTH IT BANGETTT! Terimakasih untuk mentor-mentor yang baikk hatiiii',
+                  imagePath: 'assets/images/foto_ryan.jpeg',
+                ),
+                const SizedBox(height: 16),
+
+                _buildTestimonialItem(
+                  name: 'Fauzan',
+                  university: 'Kedokteran UGM',
+                  message: 'Aplikasinya sangat membantu aku lulus ke PTN impianku. Fitur misi hariannya sangat membantu aku untuk mengerjakan soal-soal setiap harinya',
+                  imagePath: 'assets/images/foto_ojan.jpeg',
+                ),
+              ]
+            : [
+                for (final (index, item) in items.indexed) ...[
+                  if (index > 0) const SizedBox(height: 16),
+                  _buildTestimonialItem(
+                    name: item['name']?.toString() ?? 'Siswa',
+                    university: item['university']?.toString() ?? '',
+                    message: item['message']?.toString() ?? '',
+                    imagePath:
+                        'assets/images/foto_${['alfi', 'ryan', 'ojan'][index % 3]}.jpeg',
+                  ),
+                ],
+              ],
       ),
     );
   }
@@ -62,7 +76,7 @@ class TestimonialList extends StatelessWidget {
           backgroundColor: Colors.grey[300],
         ),
         const SizedBox(width: 12),
-        
+
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,7 +93,10 @@ class TestimonialList extends StatelessWidget {
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(' • ', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    child: Text(
+                      ' • ',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
                   ),
                   Expanded(
                     child: Text(
@@ -94,7 +111,7 @@ class TestimonialList extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              
+
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(

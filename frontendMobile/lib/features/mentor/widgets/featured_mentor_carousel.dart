@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/app_nav.dart';
+
 class FeaturedMentorCarousel extends StatelessWidget {
   const FeaturedMentorCarousel({super.key});
 
@@ -32,7 +34,9 @@ class FeaturedMentorCarousel extends StatelessWidget {
           final mentor = mentors[index];
           return Container(
             width: 155,
-            margin: EdgeInsets.only(right: index == mentors.length - 1 ? 0 : 12),
+            margin: EdgeInsets.only(
+              right: index == mentors.length - 1 ? 0 : 12,
+            ),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -69,7 +73,8 @@ class FeaturedMentorCarousel extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     5,
-                    (index) => const Icon(Icons.star, size: 12, color: Colors.amber),
+                    (index) =>
+                        const Icon(Icons.star, size: 12, color: Colors.amber),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -78,17 +83,19 @@ class FeaturedMentorCarousel extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                 ),
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
                   height: 28,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => AppNav.mentorProfile(
+                      context,
+                      name: mentor['name']!.replaceAll('\n', ' '),
+                      specialty: mentor['subject']!,
+                      imagePath: mentor['image'],
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0088FF),
                       elevation: 0,

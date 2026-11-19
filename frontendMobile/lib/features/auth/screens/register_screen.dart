@@ -1,12 +1,71 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+
+import 'package:provider/provider.dart';
 
 import 'login_screen.dart';
 import '../widgets/auth_logo_card.dart';
 import '../widgets/auth_footer.dart';
 import '../../main_navigation.dart';
+import '../services/auth_service.dart';
+import '../../profile/providers/current_user_provider.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _register() async {
+    final currentUser = context.read<CurrentUserProvider>();
+    if (_nameController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
+      setState(() => _error = 'Nama, email, dan password wajib diisi.');
+      return;
+    }
+    if (_passwordController.text.length < 6) {
+      setState(() => _error = 'Password minimal 6 karakter.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await AuthService.register(
+        fullName: _nameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      await currentUser.load();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (_) => false,
+      );
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +104,7 @@ class RegisterScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -75,28 +134,35 @@ class RegisterScreen extends StatelessWidget {
                         _buildInputField(
                           hintText: 'Nama Lengkap (Contoh: Fauzan)',
                           icon: Icons.person_outline,
+                          controller: _nameController,
                         ),
                         const SizedBox(height: 12),
 
                         _buildInputField(
                           hintText: 'Alamat Email Aktif',
                           icon: Icons.mail_outline,
+                          controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 12),
-
-                        _buildInputField(
-                          hintText: 'No. WhatsApp / HP',
-                          icon: Icons.phone_outlined,
-                          keyboardType: TextInputType.phone,
                         ),
                         const SizedBox(height: 12),
 
                         _buildInputField(
                           hintText: 'Buat Kata sandi',
                           icon: Icons.lock_outline,
+                          controller: _passwordController,
                           isObscure: true,
                         ),
+
+                        if (_error != null) ...[
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(color: Color(0xFFB42318)),
+                            ),
+                          ),
+                        ],
 
                         const SizedBox(height: 20),
 
@@ -105,15 +171,7 @@ class RegisterScreen extends StatelessWidget {
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const MainNavigation(),
-                                ),
-                                (route) => false,
-                              );
-                            },
+                            onPressed: _loading ? null : _register,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF1E78E6),
                               shape: RoundedRectangleBorder(
@@ -121,8 +179,10 @@ class RegisterScreen extends StatelessWidget {
                               ),
                               elevation: 0,
                             ),
-                            child: const Text(
-                              'Buat Akun Sahabat',
+                            child: Text(
+                              _loading
+                                  ? 'Membuat akun...'
+                                  : 'Buat Akun Sahabat',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,
@@ -184,7 +244,7 @@ class RegisterScreen extends StatelessWidget {
   }
 
   // Header Toggle Tab
-    Widget _buildToggleHeader(BuildContext context) {
+  Widget _buildToggleHeader(BuildContext context) {
     return Container(
       height: 52,
       padding: const EdgeInsets.all(3),
@@ -200,9 +260,7 @@ class RegisterScreen extends StatelessWidget {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const LoginScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
               },
               borderRadius: BorderRadius.circular(13),
@@ -223,7 +281,7 @@ class RegisterScreen extends StatelessWidget {
             ),
           ),
 
-          // Tab Daftar Baru 
+          // Tab Daftar Baru
           Expanded(
             child: Container(
               height: double.infinity,
@@ -234,7 +292,11 @@ class RegisterScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(Icons.person_add_alt_1, color: Color(0xFF1E78E6), size: 18),
+                  Icon(
+                    Icons.person_add_alt_1,
+                    color: Color(0xFF1E78E6),
+                    size: 18,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Daftar Baru',
@@ -256,12 +318,14 @@ class RegisterScreen extends StatelessWidget {
   Widget _buildInputField({
     required String hintText,
     required IconData icon,
+    required TextEditingController controller,
     bool isObscure = false,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return SizedBox(
       height: 48,
       child: TextField(
+        controller: controller,
         obscureText: isObscure,
         keyboardType: keyboardType,
         style: const TextStyle(fontSize: 13, color: Colors.black87),

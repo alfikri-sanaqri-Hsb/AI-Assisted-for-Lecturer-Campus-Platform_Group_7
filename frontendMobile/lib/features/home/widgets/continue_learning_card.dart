@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../../app/app_nav.dart';
 
 class ContinueLearningCard extends StatelessWidget {
-  const ContinueLearningCard({super.key});
+  const ContinueLearningCard({super.key, this.onTap, this.title = 'Penalaran Umum', this.subject = 'Materi terakhir', this.progress = .75});
+  final VoidCallback? onTap;
+  final String title, subject;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: onTap ?? () => AppNav.materials(context),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -38,8 +45,8 @@ class ContinueLearningCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Penalaran Umum',
+                Text(
+                  title,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -61,7 +68,7 @@ class ContinueLearningCard extends StatelessWidget {
                             ),
                           ),
                           FractionallySizedBox(
-                            widthFactor: 0.75,
+                            widthFactor: progress.clamp(0, 1),
                             child: Container(
                               height: 6,
                               decoration: BoxDecoration(
@@ -76,8 +83,8 @@ class ContinueLearningCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Selesai: 75%',
+                Text(
+                  'Materi terakhir • $subject • ${(progress * 100).round()}%',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey,
@@ -87,6 +94,7 @@ class ContinueLearningCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

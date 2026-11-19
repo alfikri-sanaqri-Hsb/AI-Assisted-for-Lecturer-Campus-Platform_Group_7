@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'core/database/app_database.dart';
 import 'features/study/providers/study_provider.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/profile/providers/current_user_provider.dart';
 
 void main() async {
   // Memastikan binding Flutter terinisialisasi sebelum instansiasi database
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inisialisasi database lokal Drift (Offline-First)
   final appDatabase = AppDatabase();
 
@@ -20,6 +22,7 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => StudyProvider(appDatabase)..seedInitialData(),
         ),
+        ChangeNotifierProvider(create: (_) => CurrentUserProvider()),
       ],
       child: const MyApp(),
     ),

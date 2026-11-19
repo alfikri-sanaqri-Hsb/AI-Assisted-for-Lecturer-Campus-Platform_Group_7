@@ -19,12 +19,14 @@ class DailyMission {
     required this.title,
     required this.description,
     this.actionLabel = 'Mulai',
+    this.practiceTopic,
   });
 
   final IconData icon;
   final String title;
   final String description;
   final String actionLabel;
+  final String? practiceTopic; // jika ada, misi membuka latihan topik ini
 }
 
 class TopicRecommendation {
@@ -34,6 +36,7 @@ class TopicRecommendation {
     required this.description,
     required this.badgeLabel,
     this.badgeTone = AppPillTone.info,
+    this.topic,
   });
 
   final IconData icon;
@@ -41,6 +44,7 @@ class TopicRecommendation {
   final String description;
   final String badgeLabel;
   final AppPillTone badgeTone;
+  final String? topic; // topik untuk latihan (jika kosong, memakai judul)
 }
 
 class ScheduleItem {
@@ -49,12 +53,14 @@ class ScheduleItem {
     required this.title,
     required this.description,
     this.actionLabel = 'Lihat',
+    this.isTryout = false,
   });
 
   final IconData icon;
   final String title;
   final String description;
   final String actionLabel;
+  final bool isTryout; // true = membuka Daftar Tryout
 }
 
 class StudyTip {
@@ -72,8 +78,13 @@ class StudyTip {
 }
 
 class QuickAccessItem {
-  const QuickAccessItem({required this.icon, required this.label});
+  const QuickAccessItem({
+    required this.id,
+    required this.icon,
+    required this.label,
+  });
 
+  final String id; // materi | tryout | flashcard | bank-soal
   final IconData icon;
   final String label;
 }

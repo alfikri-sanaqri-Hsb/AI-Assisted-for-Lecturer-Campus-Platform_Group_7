@@ -1,13 +1,64 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+
+import 'package:provider/provider.dart';
 
 import '../../main_navigation.dart';
+import '../services/auth_service.dart';
+import '../../profile/providers/current_user_provider.dart';
 import '../widgets/auth_logo_card.dart';
 import '../widgets/social_login_button.dart';
 import '../widgets/auth_footer.dart';
 import 'register_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    final currentUser = context.read<CurrentUserProvider>();
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
+      setState(() => _error = 'Email dan password wajib diisi.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await AuthService.login(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      await currentUser.load();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (_) => false,
+      );
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +82,10 @@ class LoginScreen extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  
+
                   // Komponen Logo
                   const AuthLogoCard(),
-                  
+
                   const SizedBox(height: 32),
 
                   // Kartu Tengah
@@ -46,7 +97,7 @@ class LoginScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -58,40 +109,84 @@ class LoginScreen extends StatelessWidget {
                         _buildToggleHeader(context),
                         const SizedBox(height: 24),
 
-                        // Tombol Masuk Google
-                        SocialLoginButton(
-                          icon: Image.network(
-                            'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
-                            height: 20,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.g_mobiledata, size: 28),
+                        TextField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          decoration: InputDecoration(
+                            hintText: 'Email',
+                            prefixIcon: const Icon(Icons.mail_outline),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
-                          text: 'Masuk Dengan Google',
-                          onPressed: () {
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const MainNavigation(),
-                              ),
-                              (route) => false,
-                            );
-                          },
                         ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _loading ? null : _login(),
+                          decoration: InputDecoration(
+                            hintText: 'Password',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(color: Color(0xFFB42318)),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
-
-                        // Tombol Masuk Email
-                        SocialLoginButton(
-                          icon: const Icon(Icons.mail_outline, color: Colors.black87),
-                          text: 'Masuk Dengan Email',
-                          onPressed: () {
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const MainNavigation(),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1E78E6),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                              (route) => false,
-                            );
-                          },
+                            ),
+                            child: _loading
+                                ? const SizedBox.square(
+                                    dimension: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Masuk'),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SocialLoginButton(
+                          icon: const Icon(Icons.g_mobiledata, size: 28),
+                          text: 'Masuk Dengan Google',
+                          onPressed: () => ScaffoldMessenger.of(context)
+                              .showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Login Google belum dikonfigurasi. Gunakan email dan password.',
+                                  ),
+                                ),
+                              ),
                         ),
                         const SizedBox(height: 24),
 
@@ -110,7 +205,8 @@ class LoginScreen extends StatelessWidget {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const RegisterScreen(),
+                                    builder: (context) =>
+                                        const RegisterScreen(),
                                   ),
                                 );
                               },
@@ -129,7 +225,7 @@ class LoginScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 32),
-                  
+
                   // Komponen Footer
                   const AuthFooter(),
                 ],

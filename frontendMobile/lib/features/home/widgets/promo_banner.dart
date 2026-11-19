@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 class PromoBanner extends StatefulWidget {
-  const PromoBanner({super.key});
+  const PromoBanner({super.key, this.onTap});
+  final VoidCallback? onTap;
 
   @override
   State<PromoBanner> createState() => _PromoBannerState();
@@ -62,9 +63,13 @@ class _PromoBannerState extends State<PromoBanner> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                _promoImages[index],
-                fit: BoxFit.cover,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: widget.onTap,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(_promoImages[index], fit: BoxFit.cover),
+                ),
               ),
             ),
           );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../app/app_nav.dart';
 import '../../../core/constants/design_tokens.dart';
 import '../../../core/widgets/app_header_scaffold.dart';
 import '../../../core/widgets/app_surface_card.dart';
@@ -19,7 +20,7 @@ class TryoutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => TryoutProvider(),
+      create: (_) => TryoutProvider()..load(),
       child: const _TryoutView(),
     );
   }
@@ -29,9 +30,9 @@ class _TryoutView extends StatelessWidget {
   const _TryoutView();
 
   void _openDetail(BuildContext context, TryoutItem item) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TryoutDetailScreen(item: item)),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => TryoutDetailScreen(item: item)));
   }
 
   @override
@@ -43,9 +44,20 @@ class _TryoutView extends StatelessWidget {
       title: 'Daftar Tryout',
       subtitle: 'Ukur kemampuanmu, selangkah lebih dekat ke PTN impian.',
       children: [
+        if (p.loading) const LinearProgressIndicator(),
+        if (p.error != null)
+          Text(
+            'Data tryout dari server belum dapat dimuat: ${p.error}',
+            style: DS.caption,
+          ),
         MyTryoutCard(
           data: p.myTryout,
-          // TODO: buka halaman Kerjakan Tryout
+          onStart: () => AppNav.startTryout(
+            context,
+            title: p.myTryout.title,
+            backendTryoutId: p.myTryout.backendId,
+            durationMinutes: items.isEmpty ? null : items.first.durationMinutes,
+          ),
         ),
         TryoutFilterSection(
           selectedTrack: p.track,
@@ -80,10 +92,7 @@ class _TryoutView extends StatelessWidget {
           )
         else
           for (final item in items)
-            TryoutCard(
-              item: item,
-              onAction: () => _openDetail(context, item),
-            ),
+            TryoutCard(item: item, onAction: () => _openDetail(context, item)),
         const Text(
           'Jalur lain, mimpi yang sama. Pilih jalur untuk melihat tryout Mandiri PTN atau Kedinasan.',
           textAlign: TextAlign.center,

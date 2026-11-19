@@ -8,27 +8,22 @@ class MentorHeaderCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'Daftar Mentor Kami',
               style: TextStyle(
-                color: Color.fromARGB(255, 0, 0, 0),
+                color: Colors.black,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Icon(
-              Icons.arrow_forward,
-              color: Color.fromARGB(255, 0, 0, 0),
-              size: 18,
-            ),
+            Icon(Icons.arrow_forward, color: Colors.black, size: 18),
           ],
         ),
         const SizedBox(height: 12),
-        
+
         // Search Bar
         Container(
           height: 45,
@@ -37,7 +32,7 @@ class MentorHeaderCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 5,
                 offset: const Offset(0, 2),
               ),

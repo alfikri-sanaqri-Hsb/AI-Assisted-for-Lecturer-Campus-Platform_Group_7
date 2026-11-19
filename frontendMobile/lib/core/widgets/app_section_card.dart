@@ -3,17 +3,20 @@ import '../constants/design_tokens.dart';
 
 /// Kartu putih berborder dengan judul + badge di kanan.
 /// Dipakai ulang di Study, Progress, Mentor, dsb.
+/// [elevated] menambahkan bayangan tipis (dipakai halaman Progress).
 class AppSectionCard extends StatelessWidget {
   const AppSectionCard({
     super.key,
     required this.title,
     required this.children,
     this.badge,
+    this.elevated = false,
   });
 
   final String title;
   final Widget? badge;
   final List<Widget> children;
+  final bool elevated;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +27,7 @@ class AppSectionCard extends StatelessWidget {
         color: DS.surface,
         border: Border.all(color: DS.border),
         borderRadius: BorderRadius.circular(DS.cardRadius),
+        boxShadow: elevated ? DS.softShadow : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -33,7 +37,7 @@ class AppSectionCard extends StatelessWidget {
             spacing: 8,
             children: [
               Expanded(child: Text(title, style: DS.sectionTitle)),
-              if (badge != null) badge!,
+              ?badge,
             ],
           ),
           ...children,

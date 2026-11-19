@@ -4,10 +4,10 @@ enum TryoutTrack {
   kedinasan;
 
   String get label => switch (this) {
-        TryoutTrack.snbt => 'SNBT/UTBK',
-        TryoutTrack.mandiriPtn => 'Mandiri PTN',
-        TryoutTrack.kedinasan => 'Kedinasan',
-      };
+    TryoutTrack.snbt => 'SNBT/UTBK',
+    TryoutTrack.mandiriPtn => 'Mandiri PTN',
+    TryoutTrack.kedinasan => 'Kedinasan',
+  };
 }
 
 enum TryoutAccessFilter {
@@ -16,16 +16,16 @@ enum TryoutAccessFilter {
   premium;
 
   String get label => switch (this) {
-        TryoutAccessFilter.all => 'Semua',
-        TryoutAccessFilter.free => 'Gratis',
-        TryoutAccessFilter.premium => 'Premium',
-      };
+    TryoutAccessFilter.all => 'Semua',
+    TryoutAccessFilter.free => 'Gratis',
+    TryoutAccessFilter.premium => 'Premium',
+  };
 
   bool matches({required bool isPremium}) => switch (this) {
-        TryoutAccessFilter.all => true,
-        TryoutAccessFilter.free => !isPremium,
-        TryoutAccessFilter.premium => isPremium,
-      };
+    TryoutAccessFilter.all => true,
+    TryoutAccessFilter.free => !isPremium,
+    TryoutAccessFilter.premium => isPremium,
+  };
 }
 
 /// Tryout yang sudah didaftarkan pengguna.
@@ -34,11 +34,13 @@ class MyTryout {
     required this.title,
     required this.subtitle,
     required this.registeredCount,
+    this.backendId,
   });
 
   final String title;
   final String subtitle;
   final int registeredCount;
+  final int? backendId;
 }
 
 /// Satu tryout pada daftar "Tryout tersedia".
@@ -53,6 +55,8 @@ class TryoutItem {
     required this.summary,
     required this.statusNote,
     this.endsAt,
+    this.backendId,
+    this.durationMinutes,
   });
 
   final String id;
@@ -62,12 +66,24 @@ class TryoutItem {
   final bool isPremium;
   final DateTime startsAt;
   final DateTime? endsAt;
+  final int? backendId;
+  final int? durationMinutes;
   final String summary; // contoh: "7 subtes • 160 soal • 195 menit"
   final String statusNote; // contoh: "Pendaftaran dibuka"
 
   static const _months = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ];
 
   static String _two(int n) => n.toString().padLeft(2, '0');

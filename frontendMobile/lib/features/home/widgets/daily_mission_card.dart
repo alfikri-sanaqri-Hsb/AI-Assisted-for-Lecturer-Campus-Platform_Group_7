@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../app/app_nav.dart';
 
 class DailyMissionCard extends StatelessWidget {
-  const DailyMissionCard({super.key});
+  const DailyMissionCard({super.key, this.onTap, this.missions = const []});
+  final VoidCallback? onTap;
+  final List<Map<String, dynamic>> missions;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: onTap ?? () => AppNav.practice(context, topic: 'Penalaran Umum'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -24,9 +30,9 @@ class DailyMissionCard extends StatelessWidget {
             icon: Icons.menu_book,
             iconColor: Colors.blue,
             borderColor: Colors.blue.shade300, 
-            title: 'Kerjakan 10 Soal Latihan',
-            progressText: '3/10',
-            progressValue: 0.3,
+            title: missions.isNotEmpty ? '${missions[0]['title'] ?? 'Kerjakan 10 Soal Latihan'}' : 'Kerjakan 10 Soal Latihan',
+            progressText: missions.isNotEmpty ? '${missions[0]['progress'] ?? 0}/${missions[0]['target'] ?? 10}' : '3/10',
+            progressValue: missions.isNotEmpty ? ((missions[0]['progress'] as num? ?? 0) / ((missions[0]['target'] as num? ?? 10))).clamp(0, 1).toDouble() : .3,
           ),
           
           const Padding(
@@ -38,9 +44,9 @@ class DailyMissionCard extends StatelessWidget {
             icon: Icons.play_circle_fill,
             iconColor: Colors.redAccent,
             borderColor: Colors.red.shade300, 
-            title: 'Tonton 3 Video Materi',
-            progressText: '0/3',
-            progressValue: 0.0,
+            title: missions.length > 1 ? '${missions[1]['title'] ?? 'Tonton 3 Video Materi'}' : 'Tonton 3 Video Materi',
+            progressText: missions.length > 1 ? '${missions[1]['progress'] ?? 0}/${missions[1]['target'] ?? 3}' : '0/3',
+            progressValue: missions.length > 1 ? ((missions[1]['progress'] as num? ?? 0) / ((missions[1]['target'] as num? ?? 3))).clamp(0, 1).toDouble() : 0,
           ),
           
           const SizedBox(height: 16),
@@ -56,6 +62,7 @@ class DailyMissionCard extends StatelessWidget {
             ],
           )
         ],
+      ),
       ),
     );
   }

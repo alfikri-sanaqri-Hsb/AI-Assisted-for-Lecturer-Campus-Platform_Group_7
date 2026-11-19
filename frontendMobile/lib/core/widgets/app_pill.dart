@@ -10,12 +10,14 @@ class AppPill extends StatelessWidget {
     required this.label,
     this.tone = AppPillTone.info,
     this.fontWeight = FontWeight.w600,
+    this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     this.onTap,
   });
 
   final String label;
   final AppPillTone tone;
   final FontWeight fontWeight;
+  final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
 
   @override
@@ -38,7 +40,7 @@ class AppPill extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: padding,
           child: Text(
             label,
             style: DS.label.copyWith(color: fg, fontWeight: fontWeight),

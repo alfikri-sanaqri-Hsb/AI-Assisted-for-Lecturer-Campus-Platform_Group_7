@@ -19,6 +19,7 @@ abstract final class StudyContentService {
     DailyMission(
       icon: LucideIcons.bookOpen,
       title: 'Selesaikan 10 Soal Pengetahuan Kuantitatif',
+      practiceTopic: 'Pengetahuan Kuantitatif',
       description:
           'Misi ini membantu kamu memperkuat logika matematika dan kecepatan menjawab.',
     ),
@@ -38,6 +39,7 @@ abstract final class StudyContentService {
     TopicRecommendation(
       icon: LucideIcons.calculator,
       title: 'Perkuat kelemahan: Penalaran Matematika',
+      topic: 'Penalaran Matematika',
       description: 'Fokus pada pola, logika, dan kecepatan menyelesaikan soal.',
       badgeLabel: 'Perlu dikuatkan',
       badgeTone: AppPillTone.warning,
@@ -45,12 +47,14 @@ abstract final class StudyContentService {
     TopicRecommendation(
       icon: LucideIcons.refreshCw,
       title: 'Target Ulang: Penalaran Umum',
+      topic: 'Penalaran Umum',
       description: 'Ulangi materi yang belum kuat agar penguasaannya lebih stabil.',
       badgeLabel: 'Target ulang',
     ),
     TopicRecommendation(
       icon: LucideIcons.fileText,
       title: 'Tinjau Soal: Logika',
+      topic: 'Logika',
       description: 'Cek soal yang sering salah agar kamu lebih siap saat tryout.',
       badgeLabel: 'Tinjau soal',
     ),
@@ -63,6 +67,7 @@ abstract final class StudyContentService {
       return TopicRecommendation(
         icon: done ? LucideIcons.fileText : LucideIcons.calculator,
         title: item.title,
+        topic: item.category,
         description: item.category,
         badgeLabel: done ? 'Tinjau soal' : 'Perlu dikuatkan',
         badgeTone: done ? AppPillTone.info : AppPillTone.warning,
@@ -74,6 +79,7 @@ abstract final class StudyContentService {
     ScheduleItem(
       icon: LucideIcons.calendar,
       title: '24 Jan: TryOut Akbar UTBK',
+      isTryout: true,
       description:
           'Persiapan simulasi tryout untuk mengukur penguasaan materi dan kecepatan menjawab.',
     ),
@@ -95,9 +101,9 @@ abstract final class StudyContentService {
   );
 
   static const quickAccess = <QuickAccessItem>[
-    QuickAccessItem(icon: LucideIcons.book, label: 'Materi'),
-    QuickAccessItem(icon: LucideIcons.circlePlay, label: 'TryOut Online'),
-    QuickAccessItem(icon: LucideIcons.circleX, label: 'Flashcard'),
-    QuickAccessItem(icon: LucideIcons.folder, label: 'Bank Soal'),
+    QuickAccessItem(id: 'materi', icon: LucideIcons.book, label: 'Materi'),
+    QuickAccessItem(id: 'tryout', icon: LucideIcons.circlePlay, label: 'TryOut Online'),
+    QuickAccessItem(id: 'flashcard', icon: LucideIcons.circleX, label: 'Flashcard'),
+    QuickAccessItem(id: 'bank-soal', icon: LucideIcons.folder, label: 'Bank Soal'),
   ];
 }

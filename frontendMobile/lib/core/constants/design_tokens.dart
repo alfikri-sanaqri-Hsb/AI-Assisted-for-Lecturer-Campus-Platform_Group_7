@@ -23,6 +23,25 @@ abstract final class DS {
   static const Color premiumSoft = Color(0xFFFFF5DA);
   static const Color premiumText = Color(0xFF9A6600);
 
+  // Warna tambahan (halaman Progress / hero)
+  static const Color amber = Color(0xFFFFC107);
+  static const Color glass = Color(0x1AFFFFFF); // putih 10%
+  static const Color glassBorder = Color(0x33FFFFFF); // putih 20%
+  static const Color onHeroMuted = Color(0xCCFFFFFF); // putih 80%
+
+  // Bayangan tipis untuk kartu berborder
+  static const List<BoxShadow> softShadow = [
+    BoxShadow(
+      color: Color(0x0D000000),
+      blurRadius: 4,
+      offset: Offset(0, 2),
+    ),
+  ];
+
+  // Warna tambahan (aksi berbahaya, mis. Log out)
+  static const Color danger = Color(0xFFFF5858);
+  static const Color dangerSoft = Color(0xFFFFEBEB);
+
   // Bayangan kartu tanpa border
   static const List<BoxShadow> cardShadow = [
     BoxShadow(
