@@ -114,6 +114,13 @@ async function checkout(req, res, next) {
 
 async function pay(req, res, next) {
   try {
+    // Pembayaran masih simulasi: siswa menandai pesanannya sendiri. Di production matikan dengan PAYMENT_MODE=off
+    if ((process.env.PAYMENT_MODE || 'simulation') !== 'simulation') {
+      return res.status(403).json({
+        success: false,
+        message: 'Pembayaran simulasi dinonaktifkan. Pesanan hanya bisa dilunasi lewat penyedia pembayaran.',
+      });
+    }
     const orderId = Number(req.params.id);
     if (!Number.isInteger(orderId) || orderId <= 0) {
       return res.status(400).json({ success: false, message: 'ID pesanan tidak valid' });

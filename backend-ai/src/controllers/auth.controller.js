@@ -8,7 +8,7 @@ const { generateToken } = require('../utils/jwt');
 const userModel = require('../models/user.model');
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 6;
+const MIN_PASSWORD_LENGTH = 8;
 
 const register = async (req, res, next) => {
   try {

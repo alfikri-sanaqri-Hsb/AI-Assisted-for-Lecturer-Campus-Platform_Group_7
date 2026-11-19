@@ -6,6 +6,8 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+require('./src/config/env.check')();
+const securityHeaders = require('./src/middleware/security.middleware');
 
 const authRoutes = require('./src/routes/auth.routes');
 const userRoutes = require('./src/routes/user.routes');
@@ -30,6 +32,10 @@ const mentorPanelRoutes = require('./src/routes/mentor.panel.routes');
 require('./src/config/database');
 
 const app = express();
+app.disable('x-powered-by');
+// Di belakang proxy/hosting (Render, Railway, Nginx) isi TRUST_PROXY=1 di .env agar IP asli terbaca
+if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
+app.use(securityHeaders);
 const PORT = process.env.PORT || 5000;
 
 // 1. CORS: izinkan request dari frontend
@@ -39,8 +45,8 @@ app.use(cors({
 }));
 
 // 2. Membaca body JSON dari request
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 // 3. Logger sederhana: catat setiap request
 app.use((req, res, next) => {

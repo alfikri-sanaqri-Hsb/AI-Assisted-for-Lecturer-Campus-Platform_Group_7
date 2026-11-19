@@ -1,11 +1,12 @@
 const crypto = require('crypto');
 const pool = require('../config/database');
 
-// Harga dari Figma. Isi 1 dan 6 bulan sesuai desain.
+// Harga 3 bulan dari Figma. Harga 1 dan 6 bulan = perkiraan (makin lama makin hemat per bulan),
+// ganti kalau desain Figma punya angka resmi.
 const PLANS = {
-  1: { name: 'Sahabat Premium 1 Bulan', amount: 0 },      // TODO isi harga dari Figma
+  1: { name: 'Sahabat Premium 1 Bulan', amount: 65000 },
   3: { name: 'Sahabat Premium 3 Bulan', amount: 175000 },
-  6: { name: 'Sahabat Premium 6 Bulan', amount: 0 },      // TODO isi harga dari Figma
+  6: { name: 'Sahabat Premium 6 Bulan', amount: 299000 },
 };
 
 const PAYMENT_METHODS = ['qris', 'kartu_debit_kredit'];
