@@ -90,33 +90,40 @@ Daftar akun baru. Tidak perlu token.
 
 Body:
 ```json
-{ "email": "fauzan@contoh.com", "password": "123456", "full_name": "Fauzan" }
+{ "email": "fauzan@contoh.com", "password": "rahasia123", "full_name": "Fauzan" }
 ```
 
 Respons `201`: `data` berisi `id`, `email`, `fullName`.
 
 | Status | Arti |
 |---|---|
-| 400 | Field kosong, email tidak valid, password kurang dari 6 karakter, atau email sudah terdaftar |
+| 400 | Field kosong, email tidak valid, password kurang dari 8 karakter, atau email sudah terdaftar |
+| 429 | Terlalu banyak pendaftaran dari satu alamat (maksimal 10 per jam) |
 
 #### POST /auth/login
 Login. Tidak perlu token.
 
 Body:
 ```json
-{ "email": "fauzan@contoh.com", "password": "123456" }
+{ "email": "fauzan@contoh.com", "password": "rahasia123" }
 ```
 
 Respons `200`:
 ```json
-{ "success": true, "message": "Login berhasil", "data": { "token": "eyJ..." } }
+{
+  "success": true,
+  "message": "Login berhasil",
+  "data": { "id": 3, "email": "fauzan@contoh.com", "token": "eyJ...", "role": "student" }
+}
 ```
+`role` bernilai `student`, `mentor`, atau `admin`.
 
 | Status | Arti |
 |---|---|
 | 400 | Email atau password kosong |
 | 401 | Email atau password salah |
 | 403 | Akun tidak aktif |
+| 429 | Terlalu banyak percobaan login (maksimal 10 per 15 menit untuk kombinasi IP dan email). Tampilkan `message`, jangan coba ulang otomatis. Header `Retry-After` berisi detik tunggu |
 
 ---
 
@@ -161,13 +168,13 @@ Ganti password.
 
 Body:
 ```json
-{ "current_password": "123456", "new_password": "abcdef" }
+{ "current_password": "rahasia123", "new_password": "passwordbaru1" }
 ```
 
 | Status | Arti |
 |---|---|
 | 200 | Berhasil |
-| 400 | Field kosong, password baru kurang dari 6 karakter, sama dengan yang lama, atau password lama salah |
+| 400 | Field kosong, password baru kurang dari 8 karakter, sama dengan yang lama, atau password lama salah |
 
 Catatan: password lama salah memakai `400`, bukan `401`, supaya aplikasi tidak otomatis logout.
 
@@ -344,4 +351,52 @@ Aturan:
 1. Jalankan backend (`npm run dev`) dan pastikan muncul pesan koneksi database berhasil.
 2. Test di Postman: `POST /auth/login`, lalu salin token.
 3. Test endpoint 🔒 dengan header `Authorization: Bearer <token>`.
+
+---
+
+## 6. Endpoint lainnya
+
+Semua 🔒 (wajib token). Kolom Role menunjukkan siapa yang boleh. Bentuk `data` paling akurat dilihat langsung di Postman atau di `src/controllers/`.
+
+| Method dan path | Role | Fungsi |
+|---|---|---|
+| `GET /home` | siswa | Data halaman Home (sapaan, jadwal, testimoni, target PTN, dll) |
+| `GET /ranking` | siswa | Peringkat siswa |
+| `GET /settings`, `GET /settings/about` | semua | Pengaturan akun dan tentang aplikasi |
+| `PUT /settings/notifications` | semua | Ubah pengaturan notifikasi |
+| `GET /practice/questions`, `POST /practice/submit` | siswa | Latihan soal harian |
+| `GET /videos`, `POST /videos/:id/watch` | siswa | Daftar video (berisi link) dan catat tontonan |
+| `GET /mentors`, `GET /mentors/:id` | siswa | Daftar dan detail mentor (termasuk `group_url` untuk chat grup) |
+| `GET /mentors/sessions/next` | siswa | Sesi live mentor berikutnya (`meeting_url` = link Zoom/Meet) |
+| `POST /feedback` | semua | Kirim masukan |
+| `GET /ptn/programs`, `GET /ptn/programs/:id` | semua | Data program studi PTN |
+| `GET/POST /ptn/targets`, `DELETE /ptn/targets/:programId` | siswa | Target PTN siswa (maksimal 3) |
+| `POST /ai/insights/study`, `GET /ai/insights/study/latest` | siswa | Insight belajar AI dan hasil terakhir |
+| `POST /ai/insights/ptn`, `GET /ai/insights/ptn/latest` | siswa | Estimasi peluang PTN dan hasil terakhir |
+
+Catatan AI: ada kuota harian (3 untuk gratis, 10 untuk premium). Lewat kuota = error dengan pesan yang siap ditampilkan.
+
+### Langganan premium (`/subscriptions`, role siswa)
+
+| Method dan path | Fungsi |
+|---|---|
+| `GET /subscriptions/plans` | Daftar paket: 1 bulan Rp65.000, 3 bulan Rp175.000, 6 bulan Rp299.000 (harga 1 dan 6 bulan masih perkiraan) |
+| `GET /subscriptions/status` | `is_premium`, `premium_until`, pesanan terakhir |
+| `POST /subscriptions/checkout` | Buat pesanan |
+| `POST /subscriptions/:id/pay` | Lunasi pesanan (**simulasi**) |
+
+Alur:
+1. `checkout` wajib header `Idempotency-Key` (8 sampai 100 karakter, huruf/angka/titik/strip/garis bawah). Buat satu key per percobaan bayar (mis. UUID). Mengirim ulang dengan key sama tidak membuat pesanan ganda.
+   Body: `{ "duration_months": 3, "payment_method": "qris" }`. Nilai `payment_method`: `qris` atau `kartu_debit_kredit`.
+2. `pay`: body `{ "outcome": "success" }` atau `"failed"` (bawaan `success`). Pesanan yang sudah diproses tidak berubah lagi.
+
+Pembayaran masih **simulasi**: tidak ada penyedia pembayaran asli. Saat server dijalankan dengan `PAYMENT_MODE=off`, `pay` menjawab `403`.
+
+## 7. Aturan keamanan yang berpengaruh ke klien
+
+- Password minimal **8 karakter** (daftar dan ganti password).
+- Login dan daftar dibatasi: lewat batas = `429`.
+- Semua jawaban API memakai `Cache-Control: no-store`.
+- Body request maksimal 100 KB.
+- Detail lengkap: `docs/KEAMANAN.md`.
 4. Kalau dapat `401` padahal sudah login, cek apakah header-nya tertulis `Bearer ` (dengan spasi) dan token tidak terpotong.
