@@ -5,12 +5,14 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { GlassModal } from "@/components/ui/data-table/table-modal";
 import { Icon } from "@/components/ui/icon";
+import { ErrorState } from "@/components/ui/async-state";
 import { contentReviewService, type UnifiedReviewItem } from "@/services";
 import type { ColumnDef } from "@/components/ui/data-table/types";
 
 export function AdminContentReviewHub() {
   const [items, setItems] = useState<UnifiedReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal Penolakan
   const [rejectTarget, setRejectTarget] = useState<UnifiedReviewItem | null>(null);
@@ -23,13 +25,16 @@ export function AdminContentReviewHub() {
     try {
       const data = await contentReviewService.getUnifiedReviewItems();
       setItems(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Konten gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleApprove = async (item: UnifiedReviewItem) => {
@@ -106,6 +111,7 @@ export function AdminContentReviewHub() {
     },
   ];
 
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat antrean kurasi konten...</div>;
   }
@@ -141,6 +147,7 @@ export function AdminContentReviewHub() {
             ],
           },
         ]}
+        capabilities={{ delete: false }}
         customRowActions={(item) => (
           <div className="flex items-center gap-1 mr-1">
             {/* Tombol Telaah Rinci */}

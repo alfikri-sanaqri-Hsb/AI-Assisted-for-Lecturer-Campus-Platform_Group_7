@@ -5,6 +5,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { GlassModal } from "@/components/ui/data-table/table-modal";
 import { Icon } from "@/components/ui/icon";
+import { ErrorState } from "@/components/ui/async-state";
 import { materialService } from "@/services";
 import type { LearningMaterial } from "@/types";
 import type { ColumnDef } from "@/components/ui/data-table/types";
@@ -12,6 +13,7 @@ import type { ColumnDef } from "@/components/ui/data-table/types";
 export function AdminMaterialManagement() {
   const [materials, setMaterials] = useState<LearningMaterial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal Penolakan / Revisi
   const [rejectItem, setRejectItem] = useState<LearningMaterial | null>(null);
@@ -24,13 +26,16 @@ export function AdminMaterialManagement() {
     try {
       const data = await materialService.getAllMaterials();
       setMaterials(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Materi gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleApprove = async (id: string) => {
@@ -112,6 +117,7 @@ export function AdminMaterialManagement() {
     },
   ];
 
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat data materi...</div>;
   }
@@ -147,6 +153,7 @@ export function AdminMaterialManagement() {
             ],
           },
         ]}
+        capabilities={{ delete: false }}
         fieldLabels={{
           title: "Judul Materi",
           subtest: "Mata Uji Subtes",

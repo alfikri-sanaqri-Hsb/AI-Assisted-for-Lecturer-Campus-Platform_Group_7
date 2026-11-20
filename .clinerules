@@ -1,0 +1,45 @@
+# Sahabat Alfary - Aturan & Panduan Pengembangan Web Dashboard
+
+## 1. Konteks & Tujuan Proyek
+- Proyek ini membangun **Web Dashboard Admin dan Mentor** untuk ekosistem pendidikan Sahabat Alfary (fokus persiapan UTBK-SNBT).
+- Kita **TIDAK** sedang mengganti frontend siswa dan **TIDAK** sedang membangun aplikasi mobile siswa.
+- Target MVP: Awal Desember 2026.
+
+## 2. Batasan Ruang Lingkup & Keamanan Kode
+- **Direktori Kerja Utama:** Semua kode dashboard berada di direktori `web/`.
+- **Folder `client/` DILINDUNGI:** Merupakan prototipe lama yang **wajib dipertahankan dan dilarang diubah/dihapus**.
+- **Backend di Root DILINDUNGI:** Kode backend di root repository tidak boleh diubah sembarangan tanpa koordinasi tim backend.
+- Perubahan dependensi atau konfigurasi root harus melalui persetujuan pemilik proyek.
+
+## 3. Aturan Hak Akses & Peran (RBAC)
+- **Tidak ada Super Admin.** Hanya ada dua peran utama: **Admin** dan **Mentor**.
+- **Mentor:**
+  - Berwenang membuat, mengubah, dan menghapus (CRUD) Materi, Bank Soal, dan Paket Tryout **hanya selama berstatus `Draf`**.
+  - Alur status: `Draf` -> `Menunggu Verifikasi` -> `Terbit` / `Ditolak`.
+  - Konten yang sudah `Terbit` **tidak boleh diubah langsung** oleh Mentor (hanya bisa mengajukan penarikan ke Admin).
+  - Mengelola data Siswa Binaan dan Profil Mentor.
+- **Admin:**
+  - Mengelola dan memverifikasi pendaftaran Siswa dan data Mentor.
+  - Meninjau pengajuan konten di antrean verifikasi (Approve/Reject dengan catatan).
+  - **DILARANG MENGUBAH ISI SOAL** (demi hak cipta pembuat soal).
+  - Berwenang menonaktifkan konten yang sudah terbit tanpa mengubah isi aslinya.
+  - Bertanggung jawab penuh atas pengelolaan Jadwal ketersediaan mentor dan sesi bimbingan.
+- **Mode Pratinjau:** Navigasi sidebar harus selalu menyediakan kartu Mode Pratinjau untuk beralih antara tampilan Admin dan Mentor.
+
+## 4. Standar Arsitektur & Desain
+- **Tech Stack:** Next.js (App Router di `web/`), React 19, TypeScript, Tailwind CSS v4.
+- **Data Pattern:** Menggunakan **Repository Layer Pattern**. Jangan melakukan hardcode data di komponen UI dan jangan memanggil fetch langsung di view. Gunakan abstraksi repository (saat ini mock in-memory, lalu beralih ke real API di M6).
+- **Desain UI:** Bahasa Indonesia, tema warna biru muda dan putih, sudut kartu membulat (*rounded*), bayangan lembut (*soft shadow*), tampilan desktop-first yang tetap responsif.
+
+## 5. Instruksi Wajib Setiap Sesi Baru
+1. **Wajib Baca Jobdesk:** Di awal sesi chat, selalu baca `web/docs/jobdesk.md` untuk mengetahui checkpoint tahap terakhir dan tahap mana yang belum dicentang (`[ ]`).
+2. **Pengerjaan Bertahap:** Kerjakan per sub-tahap kecil secara terukur.
+3. **Validasi Build:** Setelah selesai mengerjakan satu sub-tahap, jalankan validasi build (`npm run build` di folder `web/`).
+4. **Pembaruan Status:** Jika build berhasil tanpa error, perbarui checklist di `web/docs/jobdesk.md` menjadi selesai (`[x]`).
+
+BATASAN & FOKUS KERJA:
+1. Proyek ini dikerjakan 3 tim (FE-Web, FE-Mobile, BackEnd). Tugas kita HANYA menyelesaikan **FrontEnd-Web** di folder `web/` (progres saat ini ~65%).
+2. DILARANG mengerjakan, membuat, atau mengubah kode BackEnd maupun Mobile meskipun dijelaskan di dalam @/web/docs/penjelasan.md, @/web/docs/project_context.md, atau @/web/docs/jobdesk.md.
+3. Fokus utama: tuntaskan seluruh halaman, UI/UX, tabel data, filter, validasi, state management, dan perbaikan logika di sisi frontend hingga siap pakai.
+4. Siapkan arsitektur yang **siap diintegrasikan ke BackEnd**: rapikan definisi TypeScript (`types`), pisahkan pemanggilan data ke lapisan `services`/API client (gunakan mock data sementara jika endpoint belum tersedia), dan lengkapi state `loading`, `empty`, serta `error` di setiap komponen.
+5. Setiap menyelesaikan 1 tahap dan lulus `npm run build`, wajib tandai selesai (`[x]`) di @/web/docs/jobdesk.md.

@@ -32,11 +32,24 @@ import type {
   AuditLog,
   ContentStatus,
 } from "@/types";
+import { API_BASE_URL } from "@/config/data-source";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string,
+    public readonly details?: unknown,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
 
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const baseUrl = API_BASE_URL.replace(/\/$/, "");
+  const path = endpoint.replace(/^\//, "");
+  const res = await fetch(`${baseUrl}/${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -45,10 +58,20 @@ async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise
   });
 
   if (!res.ok) {
-    throw new Error(`API Error [${res.status}]: ${res.statusText}`);
+    const payload = await res.json().catch(() => null) as
+      | { message?: string; error?: string; code?: string; details?: unknown }
+      | null;
+    throw new ApiRequestError(
+      payload?.message || payload?.error || `API request failed with status ${res.status}.`,
+      res.status,
+      payload?.code,
+      payload?.details,
+    );
   }
 
-  return res.json();
+  if (res.status === 204) return undefined as T;
+  const text = await res.text();
+  return text ? (JSON.parse(text) as T) : (undefined as T);
 }
 
 export class ApiStudentRepository implements IStudentRepository {
@@ -57,11 +80,11 @@ export class ApiStudentRepository implements IStudentRepository {
   }
 
   async getById(id: string): Promise<Student | null> {
-    return fetchApi<Student>(`/students/${id}`);
+    return fetchApi<Student>(`/students/${encodeURIComponent(id)}`);
   }
 
   async getByMentorId(mentorId: string): Promise<Student[]> {
-    return fetchApi<Student[]>(`/mentors/${mentorId}/students`);
+    return fetchApi<Student[]>(`/mentors/${encodeURIComponent(mentorId)}/students`);
   }
 
   async create(data: Omit<Student, "id" | "joinedAt">): Promise<Student> {
@@ -72,14 +95,14 @@ export class ApiStudentRepository implements IStudentRepository {
   }
 
   async update(id: string, data: Partial<Student>): Promise<Student> {
-    return fetchApi<Student>(`/students/${id}`, {
+    return fetchApi<Student>(`/students/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
   async delete(id: string): Promise<boolean> {
-    await fetchApi(`/students/${id}`, { method: "DELETE" });
+    await fetchApi(`/students/${encodeURIComponent(id)}`, { method: "DELETE" });
     return true;
   }
 }
@@ -90,7 +113,7 @@ export class ApiMentorRepository implements IMentorRepository {
   }
 
   async getById(id: string): Promise<Mentor | null> {
-    return fetchApi<Mentor>(`/mentors/${id}`);
+    return fetchApi<Mentor>(`/mentors/${encodeURIComponent(id)}`);
   }
 
   async create(data: Omit<Mentor, "id" | "joinedAt">): Promise<Mentor> {
@@ -101,19 +124,19 @@ export class ApiMentorRepository implements IMentorRepository {
   }
 
   async update(id: string, data: Partial<Mentor>): Promise<Mentor> {
-    return fetchApi<Mentor>(`/mentors/${id}`, {
+    return fetchApi<Mentor>(`/mentors/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
   async delete(id: string): Promise<boolean> {
-    await fetchApi(`/mentors/${id}`, { method: "DELETE" });
+    await fetchApi(`/mentors/${encodeURIComponent(id)}`, { method: "DELETE" });
     return true;
   }
 
   async updatePermissions(id: string, permissions: MentorPermissions): Promise<Mentor> {
-    return fetchApi<Mentor>(`/mentors/${id}/permissions`, {
+    return fetchApi<Mentor>(`/mentors/${encodeURIComponent(id)}/permissions`, {
       method: "PATCH",
       body: JSON.stringify(permissions),
     });
@@ -126,11 +149,11 @@ export class ApiMaterialRepository implements IMaterialRepository {
   }
 
   async getById(id: string): Promise<LearningMaterial | null> {
-    return fetchApi<LearningMaterial>(`/materials/${id}`);
+    return fetchApi<LearningMaterial>(`/materials/${encodeURIComponent(id)}`);
   }
 
   async getByAuthorId(authorId: string): Promise<LearningMaterial[]> {
-    return fetchApi<LearningMaterial[]>(`/materials?authorId=${authorId}`);
+    return fetchApi<LearningMaterial[]>(`/materials?${new URLSearchParams({ authorId }).toString()}`);
   }
 
   async create(data: Omit<LearningMaterial, "id" | "history" | "createdAt" | "updatedAt">): Promise<LearningMaterial> {
@@ -141,14 +164,14 @@ export class ApiMaterialRepository implements IMaterialRepository {
   }
 
   async update(id: string, data: Partial<LearningMaterial>): Promise<LearningMaterial> {
-    return fetchApi<LearningMaterial>(`/materials/${id}`, {
+    return fetchApi<LearningMaterial>(`/materials/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
   async delete(id: string): Promise<boolean> {
-    await fetchApi(`/materials/${id}`, { method: "DELETE" });
+    await fetchApi(`/materials/${encodeURIComponent(id)}`, { method: "DELETE" });
     return true;
   }
 
@@ -158,7 +181,7 @@ export class ApiMaterialRepository implements IMaterialRepository {
     actor: { role: "ADMIN" | "MENTOR"; name: string },
     reason?: string
   ): Promise<LearningMaterial> {
-    return fetchApi<LearningMaterial>(`/materials/${id}/status`, {
+    return fetchApi<LearningMaterial>(`/materials/${encodeURIComponent(id)}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status, actor, reason }),
     });
@@ -171,11 +194,11 @@ export class ApiQuestionBankRepository implements IQuestionBankRepository {
   }
 
   async getById(id: string): Promise<QuestionBankItem | null> {
-    return fetchApi<QuestionBankItem>(`/questions/${id}`);
+    return fetchApi<QuestionBankItem>(`/questions/${encodeURIComponent(id)}`);
   }
 
   async getByAuthorId(authorId: string): Promise<QuestionBankItem[]> {
-    return fetchApi<QuestionBankItem[]>(`/questions?authorId=${authorId}`);
+    return fetchApi<QuestionBankItem[]>(`/questions?${new URLSearchParams({ authorId }).toString()}`);
   }
 
   async create(data: Omit<QuestionBankItem, "id" | "history" | "createdAt" | "updatedAt">): Promise<QuestionBankItem> {
@@ -186,14 +209,14 @@ export class ApiQuestionBankRepository implements IQuestionBankRepository {
   }
 
   async update(id: string, data: Partial<QuestionBankItem>): Promise<QuestionBankItem> {
-    return fetchApi<QuestionBankItem>(`/questions/${id}`, {
+    return fetchApi<QuestionBankItem>(`/questions/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
   async delete(id: string): Promise<boolean> {
-    await fetchApi(`/questions/${id}`, { method: "DELETE" });
+    await fetchApi(`/questions/${encodeURIComponent(id)}`, { method: "DELETE" });
     return true;
   }
 
@@ -203,7 +226,7 @@ export class ApiQuestionBankRepository implements IQuestionBankRepository {
     actor: { role: "ADMIN" | "MENTOR"; name: string },
     reason?: string
   ): Promise<QuestionBankItem> {
-    return fetchApi<QuestionBankItem>(`/questions/${id}/status`, {
+    return fetchApi<QuestionBankItem>(`/questions/${encodeURIComponent(id)}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status, actor, reason }),
     });
@@ -216,11 +239,11 @@ export class ApiTryoutRepository implements ITryoutRepository {
   }
 
   async getById(id: string): Promise<TryoutPackage | null> {
-    return fetchApi<TryoutPackage>(`/tryouts/${id}`);
+    return fetchApi<TryoutPackage>(`/tryouts/${encodeURIComponent(id)}`);
   }
 
   async getByAuthorId(authorId: string): Promise<TryoutPackage[]> {
-    return fetchApi<TryoutPackage[]>(`/tryouts?authorId=${authorId}`);
+    return fetchApi<TryoutPackage[]>(`/tryouts?${new URLSearchParams({ authorId }).toString()}`);
   }
 
   async create(data: Omit<TryoutPackage, "id" | "history" | "createdAt" | "updatedAt">): Promise<TryoutPackage> {
@@ -231,14 +254,14 @@ export class ApiTryoutRepository implements ITryoutRepository {
   }
 
   async update(id: string, data: Partial<TryoutPackage>): Promise<TryoutPackage> {
-    return fetchApi<TryoutPackage>(`/tryouts/${id}`, {
+    return fetchApi<TryoutPackage>(`/tryouts/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
   async delete(id: string): Promise<boolean> {
-    await fetchApi(`/tryouts/${id}`, { method: "DELETE" });
+    await fetchApi(`/tryouts/${encodeURIComponent(id)}`, { method: "DELETE" });
     return true;
   }
 
@@ -248,14 +271,14 @@ export class ApiTryoutRepository implements ITryoutRepository {
     actor: { role: "ADMIN" | "MENTOR"; name: string },
     reason?: string
   ): Promise<TryoutPackage> {
-    return fetchApi<TryoutPackage>(`/tryouts/${id}/status`, {
+    return fetchApi<TryoutPackage>(`/tryouts/${encodeURIComponent(id)}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status, actor, reason }),
     });
   }
 
   async requestWithdrawal(id: string, reason: string): Promise<TryoutPackage> {
-    return fetchApi<TryoutPackage>(`/tryouts/${id}/request-withdrawal`, {
+    return fetchApi<TryoutPackage>(`/tryouts/${encodeURIComponent(id)}/request-withdrawal`, {
       method: "POST",
       body: JSON.stringify({ reason }),
     });
@@ -268,11 +291,11 @@ export class ApiScheduleRepository implements IScheduleRepository {
   }
 
   async getById(id: string): Promise<ScheduleItem | null> {
-    return fetchApi<ScheduleItem>(`/schedules/${id}`);
+    return fetchApi<ScheduleItem>(`/schedules/${encodeURIComponent(id)}`);
   }
 
   async getByMentorId(mentorId: string): Promise<ScheduleItem[]> {
-    return fetchApi<ScheduleItem[]>(`/mentors/${mentorId}/schedules`);
+    return fetchApi<ScheduleItem[]>(`/mentors/${encodeURIComponent(mentorId)}/schedules`);
   }
 
   async create(data: Omit<ScheduleItem, "id" | "createdAt">): Promise<ScheduleItem> {
@@ -283,14 +306,14 @@ export class ApiScheduleRepository implements IScheduleRepository {
   }
 
   async update(id: string, data: Partial<ScheduleItem>): Promise<ScheduleItem> {
-    return fetchApi<ScheduleItem>(`/schedules/${id}`, {
+    return fetchApi<ScheduleItem>(`/schedules/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
   async delete(id: string): Promise<boolean> {
-    await fetchApi(`/schedules/${id}`, { method: "DELETE" });
+    await fetchApi(`/schedules/${encodeURIComponent(id)}`, { method: "DELETE" });
     return true;
   }
 
@@ -320,11 +343,11 @@ export class ApiSettingsRepository implements ISettingsRepository {
   }
 
   async getMentorProfile(mentorId: string): Promise<MentorProfile> {
-    return fetchApi<MentorProfile>(`/mentors/${mentorId}/profile`);
+    return fetchApi<MentorProfile>(`/mentors/${encodeURIComponent(mentorId)}/profile`);
   }
 
   async updateMentorProfile(mentorId: string, data: Partial<MentorProfile>): Promise<MentorProfile> {
-    return fetchApi<MentorProfile>(`/mentors/${mentorId}/profile`, {
+    return fetchApi<MentorProfile>(`/mentors/${encodeURIComponent(mentorId)}/profile`, {
       method: "PUT",
       body: JSON.stringify(data),
     });

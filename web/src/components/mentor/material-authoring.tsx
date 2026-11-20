@@ -5,35 +5,38 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { GlassModal } from "@/components/ui/data-table/table-modal";
 import { Icon } from "@/components/ui/icon";
+import { ErrorState } from "@/components/ui/async-state";
 import { materialService } from "@/services";
 import type { LearningMaterial, MaterialFormat, ContentStatus } from "@/types";
 import type { ColumnDef, FormField } from "@/components/ui/data-table/types";
-
-const ACTIVE_MENTOR_ID = "mnt-01"; // Dr. Hendra Gunawan
-const ACTIVE_MENTOR_NAME = "Dr. Hendra Gunawan, M.Si.";
+import { ACTIVE_MOCK_MENTOR } from "@/config/mock-identities";
 
 export function MentorMaterialAuthoring() {
   const [materials, setMaterials] = useState<LearningMaterial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal Detail & Riwayat
   const [detailItem, setDetailItem] = useState<LearningMaterial | null>(null);
 
   const loadData = async () => {
     try {
-      const data = await materialService.getMaterialsByMentor(ACTIVE_MENTOR_ID);
+      const data = await materialService.getMaterialsByMentor(ACTIVE_MOCK_MENTOR.id);
       setMaterials(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Materi gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleSubmitForReview = async (id: string) => {
-    await materialService.submitForReview(id, ACTIVE_MENTOR_NAME, ACTIVE_MENTOR_ID);
+    await materialService.submitForReview(id, ACTIVE_MOCK_MENTOR.name, ACTIVE_MOCK_MENTOR.id);
     loadData();
   };
 
@@ -140,8 +143,8 @@ export function MentorMaterialAuthoring() {
         format: (newFields.format as MaterialFormat) || "Modul Ringkasan",
         summary: String(newFields.summary),
         content: String(newFields.content),
-        authorId: ACTIVE_MENTOR_ID,
-        authorName: ACTIVE_MENTOR_NAME,
+        authorId: ACTIVE_MOCK_MENTOR.id,
+        authorName: ACTIVE_MOCK_MENTOR.name,
         status: (newFields.status as ContentStatus) || "DRAFT",
         isActive: true,
         totalAccess: 0,
@@ -153,25 +156,26 @@ export function MentorMaterialAuthoring() {
 
   const handleUpdate = async (id: string | number, updated: Record<string, string | number>) => {
     try {
-      await materialService.updateMaterialContent(String(id), updated as Partial<LearningMaterial>, "mentor", ACTIVE_MENTOR_ID);
+      await materialService.updateMaterialContent(String(id), updated as Partial<LearningMaterial>, "mentor", ACTIVE_MOCK_MENTOR.id);
       loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Gagal memperbarui materi");
+      throw err;
     }
   };
 
   const handleDelete = async (id: string | number) => {
     try {
-      await materialService.deleteMaterial(String(id), "mentor", ACTIVE_MENTOR_ID);
+      await materialService.deleteMaterial(String(id), "mentor", ACTIVE_MOCK_MENTOR.id);
       loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Gagal menghapus materi");
+      throw err;
     }
   };
 
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat materi...</div>;
   }
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
 
   return (
     <>
@@ -198,6 +202,7 @@ export function MentorMaterialAuthoring() {
         onItemCreate={handleCreate}
         onItemUpdate={handleUpdate}
         onItemDelete={handleDelete}
+        capabilities={{ delete: true }}
         fieldLabels={{
           title: "Judul Modul",
           subtest: "Mata Uji Subtes",

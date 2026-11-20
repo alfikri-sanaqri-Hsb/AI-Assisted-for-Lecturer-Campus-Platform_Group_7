@@ -4,28 +4,34 @@ import { useState, useEffect } from "react";
 import { Icon } from "@/components/ui/icon";
 import { settingsService } from "@/services";
 import type { AdminSettings, AuditLog } from "@/types";
+import { ErrorState } from "@/components/ui/async-state";
 
 export function AdminSettingsHub() {
   const [settings, setSettings] = useState<AdminSettings | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  useEffect(() => {
-    async function init() {
-      try {
-        const [sData, aData] = await Promise.all([
-          settingsService.getAdminSettings(),
-          settingsService.getAuditLogs(),
-        ]);
-        setSettings(sData);
-        setAuditLogs(aData);
-      } finally {
-        setLoading(false);
-      }
+  const loadSettings = async () => {
+    try {
+      const [sData, aData] = await Promise.all([
+        settingsService.getAdminSettings(),
+        settingsService.getAuditLogs(),
+      ]);
+      setSettings(sData);
+      setAuditLogs(aData);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Pengaturan gagal dimuat.");
+    } finally {
+      setLoading(false);
     }
-    init();
+  };
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadSettings(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -44,6 +50,9 @@ export function AdminSettingsHub() {
     }
   };
 
+  if (loadError) {
+    return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadSettings(); }} />;
+  }
   if (loading || !settings) {
     return <div className="p-8 text-center text-sm text-muted">Memuat pengaturan...</div>;
   }

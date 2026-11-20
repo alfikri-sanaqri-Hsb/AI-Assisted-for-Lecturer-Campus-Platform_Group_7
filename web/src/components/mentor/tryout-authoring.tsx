@@ -5,16 +5,16 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { GlassModal } from "@/components/ui/data-table/table-modal";
 import { Icon } from "@/components/ui/icon";
+import { ErrorState } from "@/components/ui/async-state";
 import { tryoutService } from "@/services";
 import type { TryoutPackage, ContentStatus } from "@/types";
 import type { ColumnDef, FormField } from "@/components/ui/data-table/types";
-
-const ACTIVE_MENTOR_ID = "mnt-01"; // Dr. Hendra Gunawan
-const ACTIVE_MENTOR_NAME = "Dr. Hendra Gunawan, M.Si.";
+import { ACTIVE_MOCK_MENTOR } from "@/config/mock-identities";
 
 export function MentorTryoutAuthoring() {
   const [tryouts, setTryouts] = useState<TryoutPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal Penarikan Paket Terbit ke Admin
   const [withdrawTarget, setWithdrawTarget] = useState<TryoutPackage | null>(null);
@@ -25,19 +25,22 @@ export function MentorTryoutAuthoring() {
 
   const loadData = async () => {
     try {
-      const data = await tryoutService.getTryoutsByMentor(ACTIVE_MENTOR_ID);
+      const data = await tryoutService.getTryoutsByMentor(ACTIVE_MOCK_MENTOR.id);
       setTryouts(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Paket tryout gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleSubmitForReview = async (id: string) => {
-    await tryoutService.submitForReview(id, ACTIVE_MENTOR_NAME, ACTIVE_MENTOR_ID);
+    await tryoutService.submitForReview(id, ACTIVE_MOCK_MENTOR.name, ACTIVE_MOCK_MENTOR.id);
     loadData();
   };
 
@@ -45,12 +48,12 @@ export function MentorTryoutAuthoring() {
     e.preventDefault();
     if (!withdrawTarget || !withdrawReason.trim()) return;
     try {
-      await tryoutService.requestWithdrawal(withdrawTarget.id, ACTIVE_MENTOR_ID, withdrawReason);
+      await tryoutService.requestWithdrawal(withdrawTarget.id, ACTIVE_MOCK_MENTOR.id, withdrawReason);
       setWithdrawTarget(null);
       setWithdrawReason("");
       loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Gagal mengajukan penarikan");
+      setLoadError(err instanceof Error ? err.message : "Gagal mengajukan penarikan");
     }
   };
 
@@ -106,8 +109,26 @@ export function MentorTryoutAuthoring() {
   const formFields: FormField[] = [
     { name: "title", label: "Judul Paket TryOut", type: "text", required: true, placeholder: "Contoh: Paket Simulasi UTBK-SNBT Intensif 02" },
     { name: "targetBatch", label: "Target Batch / Gelombang", type: "text", required: true, placeholder: "Contoh: UTBK-SNBT 2026 Gelombang 1" },
-    { name: "durationMinutes", label: "Durasi Waktu Pengerjaan (Menit)", type: "number", required: true, defaultValue: 195 },
-    { name: "totalQuestions", label: "Total Jumlah Butir Soal", type: "number", required: true, defaultValue: 155 },
+    {
+      name: "durationMinutes",
+      label: "Durasi Waktu Pengerjaan (Menit)",
+      type: "number",
+      required: true,
+      min: 1,
+      step: 1,
+      defaultValue: 195,
+      helpText: "Durasi harus berupa bilangan bulat positif dalam satuan menit.",
+    },
+    {
+      name: "totalQuestions",
+      label: "Total Jumlah Butir Soal",
+      type: "number",
+      required: true,
+      min: 1,
+      step: 1,
+      defaultValue: 155,
+      helpText: "Jumlah soal harus berupa bilangan bulat positif.",
+    },
     { name: "description", label: "Deskripsi & Petunjuk Simulasi", type: "textarea", required: true, placeholder: "Tuliskan cakupan subtes dan panduan pengerjaan paket..." },
     {
       name: "status",
@@ -138,8 +159,8 @@ export function MentorTryoutAuthoring() {
           { name: "Penalaran Matematika (PM)", questionCount: 20, durationMinutes: 40 },
         ],
         questionIds: ["q-01", "q-02"],
-        authorId: ACTIVE_MENTOR_ID,
-        authorName: ACTIVE_MENTOR_NAME,
+        authorId: ACTIVE_MOCK_MENTOR.id,
+        authorName: ACTIVE_MOCK_MENTOR.name,
         status: (newFields.status as ContentStatus) || "DRAFT",
         isActive: true,
       },
@@ -150,25 +171,26 @@ export function MentorTryoutAuthoring() {
 
   const handleUpdate = async (id: string | number, updated: Record<string, string | number>) => {
     try {
-      await tryoutService.updateTryoutContent(String(id), updated as Partial<TryoutPackage>, "mentor", ACTIVE_MENTOR_ID);
+      await tryoutService.updateTryoutContent(String(id), updated as Partial<TryoutPackage>, "mentor", ACTIVE_MOCK_MENTOR.id);
       loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Gagal memperbarui paket tryout");
+      throw err;
     }
   };
 
   const handleDelete = async (id: string | number) => {
     try {
-      await tryoutService.deleteTryout(String(id), "mentor", ACTIVE_MENTOR_ID);
+      await tryoutService.deleteTryout(String(id), "mentor", ACTIVE_MOCK_MENTOR.id);
       loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Gagal menghapus paket tryout");
+      throw err;
     }
   };
 
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat paket tryout...</div>;
   }
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
 
   return (
     <>
@@ -195,6 +217,7 @@ export function MentorTryoutAuthoring() {
         onItemCreate={handleCreate}
         onItemUpdate={handleUpdate}
         onItemDelete={handleDelete}
+        capabilities={{ delete: true }}
         customRowActions={(item) => (
           <div className="flex items-center gap-1 mr-1">
             <button

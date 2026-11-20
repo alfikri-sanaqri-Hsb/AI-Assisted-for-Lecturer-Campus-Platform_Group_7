@@ -20,7 +20,7 @@ export interface ContentAuditTrail {
 }
 
 export const CONTENT_STATUS_LABELS: Record<ContentStatus, { label: string; badgeVariant: "neutral" | "brand" | "success" | "warning" | "danger" | "muted" }> = {
-  DRAFT: { label: "Draft", badgeVariant: "neutral" },
+  DRAFT: { label: "Draf", badgeVariant: "neutral" },
   SUBMITTED: { label: "Menunggu Verifikasi", badgeVariant: "warning" },
   APPROVED: { label: "Disetujui", badgeVariant: "brand" },
   REJECTED: { label: "Ditolak", badgeVariant: "danger" },

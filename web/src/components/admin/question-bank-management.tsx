@@ -1,21 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { StatusBadge } from "@/components/ui/data-table/status-badge";
+import {
+  ContentStatusBadge,
+  contentStatusFilterOptions,
+  contentStatusLabel,
+} from "@/components/ui/data-table/content-status-badge";
 import { GlassModal } from "@/components/ui/data-table/table-modal";
 import { Icon } from "@/components/ui/icon";
+import { ActionAlert, ErrorState } from "@/components/ui/async-state";
+import { useActionRunner } from "@/components/ui/use-action-runner";
 import { questionBankService } from "@/services";
 import type { QuestionBankItem } from "@/types";
 import type { ColumnDef } from "@/components/ui/data-table/types";
 
+const ADMIN_NAME = "Administrator Alfary";
+
 export function AdminQuestionBankManagement() {
   const [questions, setQuestions] = useState<QuestionBankItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Aksi terkunci per baris (id soal), galat/sukses tampil di atas tabel.
+  const { run, isPending, notice, dismiss } = useActionRunner();
 
   // Modal Penolakan
   const [rejectItem, setRejectItem] = useState<QuestionBankItem | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectError, setRejectError] = useState<string | null>(null);
 
   // Modal Detail Lengkap Soal (Teks, Opsi A-E, Pembahasan, Status Duplikasi)
   const [viewDetailItem, setViewDetailItem] = useState<QuestionBankItem | null>(null);
@@ -24,41 +37,98 @@ export function AdminQuestionBankManagement() {
     try {
       const data = await questionBankService.getAllQuestions();
       setQuestions(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Bank soal gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const handleApprove = async (id: string) => {
-    await questionBankService.approveQuestion(id, "Administrator Alfary");
-    loadData();
-  };
-
-  const handlePublish = async (id: string) => {
-    await questionBankService.publishQuestion(id, "Administrator Alfary");
-    loadData();
-  };
-
-  const handleConfirmReject = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!rejectItem || !rejectionReason.trim()) return;
-    await questionBankService.rejectQuestion(rejectItem.id, "Administrator Alfary", rejectionReason);
-    setRejectItem(null);
-    setRejectionReason("");
-    loadData();
-  };
-
-  const handleDeactivate = async (id: string) => {
-    await questionBankService.deactivateQuestion(
-      id,
-      "Administrator Alfary",
-      "Dinonaktifkan sementara dari Bank Soal aktif oleh Admin."
+  const handleApprove = (item: QuestionBankItem) =>
+    run(
+      item.id,
+      async () => {
+        await questionBankService.approveQuestion(item.id, ADMIN_NAME);
+        await loadData();
+      },
+      { successMessage: `Soal ${item.code} disetujui.` }
     );
-    loadData();
+
+  const handlePublish = (item: QuestionBankItem) =>
+    run(
+      item.id,
+      async () => {
+        await questionBankService.publishQuestion(item.id, ADMIN_NAME);
+        await loadData();
+      },
+      { successMessage: `Soal ${item.code} diterbitkan ke aplikasi.` }
+    );
+
+  const handleDeactivate = (item: QuestionBankItem) =>
+    run(
+      item.id,
+      async () => {
+        await questionBankService.deactivateQuestion(
+          item.id,
+          ADMIN_NAME,
+          "Dinonaktifkan sementara dari Bank Soal aktif oleh Admin."
+        );
+        await loadData();
+      },
+      { successMessage: `Soal ${item.code} dinonaktifkan.` }
+    );
+
+  const openRejectModal = (item: QuestionBankItem) => {
+    setRejectItem(item);
+    setRejectionReason("");
+    setRejectError(null);
+  };
+
+  const isRejecting = rejectItem ? isPending(rejectItem.id) : false;
+
+  const closeRejectModal = () => {
+    if (isRejecting) return;
+    setRejectItem(null);
+    setRejectError(null);
+  };
+
+  const handleConfirmReject = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!rejectItem) return;
+
+    const reason = rejectionReason.trim();
+    if (!reason) {
+      setRejectError("Alasan penolakan wajib diisi.");
+      return;
+    }
+
+    const target = rejectItem;
+    setRejectError(null);
+
+    // Galat ditampilkan di dalam modal (report: "none"), bukan di balik overlay.
+    const result = await run(
+      target.id,
+      async () => {
+        await questionBankService.rejectQuestion(target.id, ADMIN_NAME, reason);
+        await loadData();
+      },
+      {
+        report: "none",
+        successMessage: `Soal ${target.code} ditolak dan dikembalikan ke mentor.`,
+      }
+    );
+
+    if (result.ok) {
+      setRejectItem(null);
+      setRejectionReason("");
+    } else {
+      setRejectError(result.error);
+    }
   };
 
   const columns: ColumnDef<QuestionBankItem>[] = [
@@ -137,16 +207,22 @@ export function AdminQuestionBankManagement() {
       key: "status",
       header: "Status",
       sortable: true,
-      render: (row) => <StatusBadge status={row.status} />,
+      exportValue: (row) => contentStatusLabel(row.status),
+      render: (row) => <ContentStatusBadge status={row.status} />,
     },
   ];
 
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat data Bank Soal...</div>;
   }
 
   return (
     <>
+      {notice && (
+        <ActionAlert tone={notice.tone} message={notice.message} onDismiss={dismiss} />
+      )}
+
       <DataTable<QuestionBankItem>
         title="Repositori & Kurasi Bank Soal UTBK-SNBT"
         description="Periksa butir soal yang diajukan mentor, evaluasi kunci jawaban dan analisis duplikasi, setujui, terbitkan, atau tolak dengan catatan perbaikan."
@@ -158,13 +234,13 @@ export function AdminQuestionBankManagement() {
           {
             key: "status",
             label: "Status",
-            options: [
-              { label: "Diterbitkan (PUBLISHED)", value: "PUBLISHED" },
-              { label: "Menunggu Verifikasi (SUBMITTED)", value: "SUBMITTED" },
-              { label: "Disetujui (APPROVED)", value: "APPROVED" },
-              { label: "Ditolak (REJECTED)", value: "REJECTED" },
-              { label: "Dinonaktifkan (DEACTIVATED)", value: "DEACTIVATED" },
-            ],
+            options: contentStatusFilterOptions([
+              "PUBLISHED",
+              "SUBMITTED",
+              "APPROVED",
+              "REJECTED",
+              "DEACTIVATED",
+            ]),
           },
           {
             key: "difficulty",
@@ -172,72 +248,81 @@ export function AdminQuestionBankManagement() {
             options: [
               { label: "Mudah", value: "Mudah" },
               { label: "Sedang", value: "Sedang" },
-              { label: "Sukar", value: "Sukar" },
+              { label: "Sulit", value: "Sulit" },
             ],
           },
         ]}
-        customRowActions={(item) => (
-          <div className="flex items-center gap-1 mr-1">
-            {/* Tombol Lihat Detail Soal */}
-            <button
-              type="button"
-              onClick={() => setViewDetailItem(item)}
-              title="Periksa Butir Soal & Kunci"
-              className="grid size-8 place-items-center rounded-lg text-brand-600 hover:bg-brand-50 transition-colors"
-            >
-              <Icon name="eye" className="size-4" />
-            </button>
-
-            {/* Aksi Verifikasi untuk Admin */}
-            {item.status === "SUBMITTED" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => handleApprove(item.id)}
-                  title="Setujui Soal"
-                  className="grid size-8 place-items-center rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
-                >
-                  <Icon name="check" className="size-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRejectItem(item);
-                    setRejectionReason("");
-                  }}
-                  title="Tolak Soal dengan Alasan"
-                  className="grid size-8 place-items-center rounded-lg text-rose-600 hover:bg-rose-50 transition-colors"
-                >
-                  <Icon name="close" className="size-4" />
-                </button>
-              </>
-            )}
-
-            {item.status === "APPROVED" && (
+        capabilities={{ delete: false }}
+        customRowActions={(item) => {
+          const busy = isPending(item.id);
+          return (
+            <div className="flex items-center gap-1 mr-1">
+              {/* Tombol Lihat Detail Soal */}
               <button
                 type="button"
-                onClick={() => handlePublish(item.id)}
-                title="Terbitkan ke Aplikasi"
-                className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2 py-1 text-xs font-semibold border border-emerald-200 transition-colors"
+                onClick={() => setViewDetailItem(item)}
+                title="Periksa Butir Soal & Kunci"
+                className="grid size-8 place-items-center rounded-lg text-brand-600 hover:bg-brand-50 transition-colors"
               >
-                <Icon name="check" className="size-3.5" />
-                <span>Terbitkan</span>
+                <Icon name="eye" className="size-4" />
               </button>
-            )}
 
-            {item.status === "PUBLISHED" && (
-              <button
-                type="button"
-                onClick={() => handleDeactivate(item.id)}
-                title="Nonaktifkan Soal (Tanpa Mengubah Naskah Asli)"
-                className="inline-flex items-center gap-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 px-2 py-1 text-xs font-semibold border border-line transition-colors"
-              >
-                <Icon name="trash" className="size-3" />
-                <span>Nonaktifkan</span>
-              </button>
-            )}
-          </div>
-        )}
+              {/* Aksi Verifikasi untuk Admin */}
+              {item.status === "SUBMITTED" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleApprove(item)}
+                    disabled={busy}
+                    aria-busy={busy || undefined}
+                    title="Setujui Soal"
+                    className="grid size-8 place-items-center rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Icon name="check" className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openRejectModal(item)}
+                    disabled={busy}
+                    aria-busy={busy || undefined}
+                    title="Tolak Soal dengan Alasan"
+                    className="grid size-8 place-items-center rounded-lg text-rose-600 hover:bg-rose-50 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Icon name="close" className="size-4" />
+                  </button>
+                </>
+              )}
+
+              {item.status === "APPROVED" && (
+                <button
+                  type="button"
+                  onClick={() => void handlePublish(item)}
+                  disabled={busy}
+                  aria-busy={busy || undefined}
+                  title="Terbitkan ke Aplikasi"
+                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2 py-1 text-xs font-semibold border border-emerald-200 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Icon name="check" className="size-3.5" />
+                  <span>Terbitkan</span>
+                </button>
+              )}
+
+              {item.status === "PUBLISHED" && (
+                <button
+                  type="button"
+                  onClick={() => void handleDeactivate(item)}
+                  disabled={busy}
+                  aria-busy={busy || undefined}
+                  title="Nonaktifkan Soal (Tanpa Mengubah Naskah Asli)"
+                  className="inline-flex items-center gap-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 px-2 py-1 text-xs font-semibold border border-line transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Icon name="trash" className="size-3" />
+                  <span>Nonaktifkan</span>
+                </button>
+              )}
+            </div>
+          );
+        }}
         exportFileName="bank-soal-admin"
       />
 
@@ -327,9 +412,10 @@ export function AdminQuestionBankManagement() {
       {/* Modal Tolak Soal */}
       <GlassModal
         isOpen={!!rejectItem}
-        onClose={() => setRejectItem(null)}
+        onClose={closeRejectModal}
         title={`Tolak Soal: ${rejectItem?.code || ""}`}
         subtitle="Berikan instruksi revisi yang jelas agar mentor dapat memperbaiki soal ini."
+        closeOnBackdrop={false}
       >
         <form onSubmit={handleConfirmReject} className="space-y-4">
           <div>
@@ -342,24 +428,39 @@ export function AdminQuestionBankManagement() {
               onChange={(e) => setRejectionReason(e.target.value)}
               required
               rows={4}
+              disabled={isRejecting}
+              aria-invalid={rejectError ? true : undefined}
+              aria-describedby={rejectError ? "alasan-tolak-soal-error" : undefined}
               placeholder="Contoh: Kunci jawaban pada opsi C memiliki ambiguitas dengan opsi B, perbaiki pengecoh kalimat atau tambahkan pembatas premis..."
-              className="w-full rounded-xl border border-line bg-white/80 px-3.5 py-2.5 text-xs sm:text-sm text-ink backdrop-blur-xs transition-colors focus:border-rose-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              className="w-full rounded-xl border border-line bg-white/80 px-3.5 py-2.5 text-xs sm:text-sm text-ink backdrop-blur-xs transition-colors focus:border-rose-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 disabled:opacity-60"
             />
           </div>
+
+          {rejectError && (
+            <p
+              id="alasan-tolak-soal-error"
+              role="alert"
+              className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700"
+            >
+              {rejectError}
+            </p>
+          )}
 
           <div className="flex items-center justify-end gap-3 border-t border-line/60 pt-4">
             <button
               type="button"
-              onClick={() => setRejectItem(null)}
-              className="rounded-xl border border-line bg-white/80 px-4 py-2 text-xs font-semibold text-ink hover:bg-white"
+              onClick={closeRejectModal}
+              disabled={isRejecting}
+              className="rounded-xl border border-line bg-white/80 px-4 py-2 text-xs font-semibold text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 text-xs font-semibold text-white shadow-xs"
+              disabled={isRejecting}
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 text-xs font-semibold text-white shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Kirim Penolakan ke Mentor
+              {isRejecting ? "Mengirim..." : "Kirim Penolakan ke Mentor"}
             </button>
           </div>
         </form>

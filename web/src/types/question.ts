@@ -1,6 +1,6 @@
 import type { ContentStatus, ContentAuditTrail } from "./content";
 
-export type QuestionDifficulty = "Mudah" | "Sedang" | "Sukar";
+export type QuestionDifficulty = "Mudah" | "Sedang" | "Sulit";
 
 export interface QuestionOption {
   key: "A" | "B" | "C" | "D" | "E";

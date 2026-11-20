@@ -6,22 +6,29 @@ import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { studentService } from "@/services";
 import type { Student, StudentStatus } from "@/types";
 import type { ColumnDef, FormField } from "@/components/ui/data-table/types";
+import { normalizeEmail, validateEmail } from "@/lib/validation/email";
+import { normalizePhone, validatePhone } from "@/lib/validation/phone";
+import { ErrorState } from "@/components/ui/async-state";
 
 export function AdminStudentManagement() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
       const data = await studentService.getAllStudents();
       setStudents(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Data siswa gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const columns: ColumnDef<Student>[] = [
@@ -90,8 +97,26 @@ export function AdminStudentManagement() {
 
   const formFields: FormField[] = [
     { name: "name", label: "Nama Lengkap Siswa", type: "text", required: true, placeholder: "Contoh: Budi Pratama" },
-    { name: "email", label: "Email Siswa", type: "text", required: true, placeholder: "nama@student.sch.id" },
-    { name: "phone", label: "Nomor WhatsApp / Telepon", type: "text", required: true, placeholder: "0812-xxxx-xxxx" },
+    {
+      name: "email",
+      label: "Email Siswa",
+      type: "email",
+      required: true,
+      placeholder: "nama@gmail.com",
+      helpText: "Gunakan email aktif milik siswa.",
+      normalize: normalizeEmail,
+      validate: validateEmail,
+    },
+    {
+      name: "phone",
+      label: "Nomor WhatsApp / Telepon",
+      type: "tel",
+      required: true,
+      placeholder: "0812-3456-7890",
+      helpText: "Diawali 08, 10–13 digit. Spasi dan tanda hubung dibuang otomatis.",
+      normalize: normalizePhone,
+      validate: validatePhone,
+    },
     {
       name: "grade",
       label: "Jenjang / Kelas",
@@ -153,6 +178,7 @@ export function AdminStudentManagement() {
     loadData();
   };
 
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat data siswa...</div>;
   }
@@ -188,6 +214,7 @@ export function AdminStudentManagement() {
       onItemCreate={handleCreate}
       onItemUpdate={handleUpdate}
       onItemDelete={handleDelete}
+      capabilities={{ delete: true }}
       fieldLabels={{
         name: "Nama Lengkap",
         email: "Email Resmi",

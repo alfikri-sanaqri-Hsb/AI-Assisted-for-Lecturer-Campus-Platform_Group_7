@@ -1,5 +1,6 @@
 import { scheduleRepository } from "@/repositories";
 import type { ScheduleItem, ScheduleStatus } from "@/types";
+import { validateScheduleSlot } from "@/lib/validation/schedule";
 
 export class ScheduleService {
   /**
@@ -40,6 +41,14 @@ export class ScheduleService {
       throw new Error("Akses Ditolak: Pengelolaan jadwal merupakan tanggung jawab Administrator sepenuhnya berdasarkan koordinasi dengan Mentor.");
     }
 
+    // Validasi tanggal dan jam (aturan ditegakkan di service, bukan hanya di formulir)
+    const slotError = validateScheduleSlot({
+      date: data.date,
+      startTime: data.startTime,
+      endTime: data.endTime,
+    });
+    if (slotError) throw new Error(slotError);
+
     // Validasi bentrok jadwal
     const conflicts = await this.checkConflicts(data.date, data.startTime, data.endTime, data.mentorId);
     if (conflicts.length > 0) {
@@ -70,6 +79,14 @@ export class ScheduleService {
     const date = data.date || existing.date;
     const startTime = data.startTime || existing.startTime;
     const endTime = data.endTime || existing.endTime;
+
+    // Validasi tanggal dan jam. Bila slot tidak berubah dari data lama, tidak
+    // divalidasi ulang, supaya jadwal lama tetap bisa diedit (mis. statusnya).
+    const slotError = validateScheduleSlot(
+      { date, startTime, endTime },
+      { date: existing.date, startTime: existing.startTime, endTime: existing.endTime }
+    );
+    if (slotError) throw new Error(slotError);
 
     if (data.startTime || data.endTime || data.date || data.mentorId) {
       const conflicts = await this.checkConflicts(date, startTime, endTime, mentorId, id);

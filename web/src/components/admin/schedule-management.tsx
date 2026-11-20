@@ -7,11 +7,22 @@ import { Icon } from "@/components/ui/icon";
 import { scheduleService, mentorService } from "@/services";
 import type { ScheduleItem, Mentor, ScheduleType, ScheduleStatus } from "@/types";
 import type { ColumnDef, FormField } from "@/components/ui/data-table/types";
+import { ErrorState } from "@/components/ui/async-state";
+import { formatDateId } from "@/lib/format";
+import {
+  SCHEDULE_CLOSE_TIME,
+  SCHEDULE_OPEN_TIME,
+  todayIsoWIB,
+  validateScheduleDate,
+  validateScheduleRange,
+  validateScheduleTime,
+} from "@/lib/validation/schedule";
 
 export function AdminScheduleManagement() {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -21,13 +32,16 @@ export function AdminScheduleManagement() {
       ]);
       setSchedules(schData);
       setMentors(mntData);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Jadwal gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const columns: ColumnDef<ScheduleItem>[] = [
@@ -56,9 +70,11 @@ export function AdminScheduleManagement() {
       key: "date",
       header: "Waktu & Tanggal",
       sortable: true,
+      // Urut kronologis: tanggal dulu, lalu jam mulai.
+      sortValue: (row) => `${row.date} ${row.startTime}`,
       render: (row) => (
         <div>
-          <p className="font-semibold text-ink text-xs sm:text-sm">{row.date}</p>
+          <p className="font-semibold text-ink text-xs sm:text-sm">{formatDateId(row.date)}</p>
           <p className="text-xs text-muted font-mono">{row.startTime} - {row.endTime} WIB</p>
         </div>
       ),
@@ -98,10 +114,13 @@ export function AdminScheduleManagement() {
     },
   ];
 
-  const mentorOptions = mentors.map((m) => ({
-    label: `${m.name} (${m.subject})`,
-    value: m.id,
-  }));
+  // Hanya mentor berstatus Aktif yang dapat ditugaskan pada jadwal.
+  const mentorOptions = mentors
+    .filter((m) => m.status === "Aktif")
+    .map((m) => ({
+      label: `${m.name} (${m.subject})`,
+      value: m.id,
+    }));
 
   const formFields: FormField[] = [
     { name: "title", label: "Nama Agenda / Sesi", type: "text", required: true, placeholder: "Contoh: Bimbingan Intensif Penalaran Umum" },
@@ -123,11 +142,46 @@ export function AdminScheduleManagement() {
       label: "Pilih Tenaga Mentor",
       type: "select",
       required: true,
-      options: mentorOptions.length > 0 ? mentorOptions : [{ label: "Dr. Hendra Gunawan, M.Si.", value: "mnt-01" }],
+      helpText: "Hanya mentor berstatus Aktif yang dapat dipilih.",
+      options:
+        mentorOptions.length > 0
+          ? mentorOptions
+          : [{ label: "Belum ada mentor aktif", value: "" }],
     },
-    { name: "date", label: "Tanggal Pelaksanaan (YYYY-MM-DD)", type: "text", required: true, placeholder: "2026-11-20" },
-    { name: "startTime", label: "Jam Mulai (HH:MM)", type: "text", required: true, placeholder: "16:00" },
-    { name: "endTime", label: "Jam Selesai (HH:MM)", type: "text", required: true, placeholder: "17:30" },
+    {
+      name: "date",
+      label: "Tanggal Pelaksanaan",
+      type: "date",
+      required: true,
+      minValue: todayIsoWIB,
+      helpText: "Pilih dari kalender. Tanggal yang sudah lewat tidak dapat dipilih.",
+      validate: (value, _values, initial) => validateScheduleDate(value, initial),
+    },
+    {
+      name: "startTime",
+      label: "Jam Mulai",
+      type: "time",
+      required: true,
+      step: 300,
+      minValue: SCHEDULE_OPEN_TIME,
+      maxValue: SCHEDULE_CLOSE_TIME,
+      helpText: `Jam operasional ${SCHEDULE_OPEN_TIME}\u2013${SCHEDULE_CLOSE_TIME} WIB.`,
+      validate: (value, _values, initial) =>
+        value === initial ? null : validateScheduleTime(value, "Jam mulai"),
+    },
+    {
+      name: "endTime",
+      label: "Jam Selesai",
+      type: "time",
+      required: true,
+      step: 300,
+      minValue: SCHEDULE_OPEN_TIME,
+      maxValue: SCHEDULE_CLOSE_TIME,
+      helpText: "Harus setelah jam mulai.",
+      validate: (value, values, initial) =>
+        (value === initial ? null : validateScheduleTime(value, "Jam selesai")) ??
+        (values.startTime ? validateScheduleRange(values.startTime, value) : null),
+    },
     {
       name: "platform",
       label: "Platform Tatap Muka",
@@ -157,46 +211,53 @@ export function AdminScheduleManagement() {
     { name: "notes", label: "Catatan Briefing / Materi", type: "textarea", placeholder: "Pokok bahasan sesi..." },
   ];
 
-  const handleCreate = async (newFields: Record<string, string | number>) => {
-    const selectedMentor = mentors.find((m) => m.id === String(newFields.mentorId)) || mentors[0];
-    try {
-      await scheduleService.createSchedule(
-        {
-          title: String(newFields.title),
-          type: (newFields.type as ScheduleType) || "Sesi Mentoring",
-          date: String(newFields.date),
-          startTime: String(newFields.startTime),
-          endTime: String(newFields.endTime),
-          mentorId: selectedMentor ? selectedMentor.id : "mnt-01",
-          mentorName: selectedMentor ? selectedMentor.name : "Mentor Sahabat Alfary",
-          platform: (newFields.platform as "Zoom" | "Google Meet" | "Aplikasi Internal") || "Zoom",
-          meetUrl: String(newFields.meetUrl || ""),
-          status: (newFields.status as ScheduleStatus) || "Terjadwal",
-          notes: String(newFields.notes || ""),
-          managedByAdmin: true,
-        },
-        "admin"
-      );
-      loadData();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Gagal membuat jadwal");
+  /** Mencari mentor; melempar galat (tampil di formulir) bila tidak ada. */
+  const findMentor = (id: string): Mentor => {
+    const mentor = mentors.find((m) => m.id === id);
+    if (!mentor) {
+      throw new Error("Mentor yang dipilih tidak ditemukan. Pilih mentor dari daftar.");
     }
+    return mentor;
+  };
+
+  const handleCreate = async (newFields: Record<string, string | number>) => {
+    const selectedMentor = findMentor(String(newFields.mentorId));
+    await scheduleService.createSchedule(
+      {
+        title: String(newFields.title),
+        type: (newFields.type as ScheduleType) || "Sesi Mentoring",
+        date: String(newFields.date),
+        startTime: String(newFields.startTime),
+        endTime: String(newFields.endTime),
+        mentorId: selectedMentor.id,
+        mentorName: selectedMentor.name,
+        platform: (newFields.platform as "Zoom" | "Google Meet" | "Aplikasi Internal") || "Zoom",
+        meetUrl: String(newFields.meetUrl || ""),
+        status: (newFields.status as ScheduleStatus) || "Terjadwal",
+        notes: String(newFields.notes || ""),
+        managedByAdmin: true,
+      },
+      "admin"
+    );
+    void loadData();
   };
 
   const handleUpdate = async (id: string | number, updated: Record<string, string | number>) => {
-    try {
-      await scheduleService.updateSchedule(String(id), updated as Partial<ScheduleItem>, "admin");
-      loadData();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Gagal memperbarui jadwal");
+    const patch: Partial<ScheduleItem> = { ...(updated as Partial<ScheduleItem>) };
+    // Nama mentor disimpan terpisah; harus ikut diperbarui saat mentor diganti.
+    if (updated.mentorId !== undefined) {
+      patch.mentorName = findMentor(String(updated.mentorId)).name;
     }
+    await scheduleService.updateSchedule(String(id), patch, "admin");
+    void loadData();
   };
 
   const handleDelete = async (id: string | number) => {
     await scheduleService.deleteSchedule(String(id), "admin");
-    loadData();
+    void loadData();
   };
 
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat jadwal...</div>;
   }
@@ -250,6 +311,7 @@ export function AdminScheduleManagement() {
         onItemCreate={handleCreate}
         onItemUpdate={handleUpdate}
         onItemDelete={handleDelete}
+        capabilities={{ delete: true }}
         fieldLabels={{
           title: "Nama Agenda",
           type: "Tipe Agenda",

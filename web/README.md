@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sahabat Alfary Web
 
-## Getting Started
+Frontend Next.js untuk dashboard Admin dan Mentor Sahabat Alfary. Repository ini
+tidak menyediakan backend, database, autentikasi server, atau endpoint API.
+Lapisan service/repository menjaga UI tetap dapat berjalan dengan mock data dan
+siap ditukar ke API milik tim Backend.
 
-First, run the development server:
+## Menjalankan frontend
 
-```bash
+```powershell
+cd web
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka <http://localhost:3000>. Pemeriksaan lokal:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Mode data
 
-## Learn More
+Mode default adalah **mock**. Data simulasi disimpan di `sessionStorage` dan
+diinisialisasi dari `src/repositories/mock/initial-data.ts`.
 
-To learn more about Next.js, take a look at the following resources:
+Untuk memakai API Backend:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+NEXT_PUBLIC_USE_API=true
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Jika `NEXT_PUBLIC_USE_API` tidak bernilai `true`, semua repository memakai mock.
+Jangan menambahkan fallback endpoint di komponen; ubah adapter atau kontrak
+secara eksplisit setelah spesifikasi Backend disepakati.
 
-## Deploy on Vercel
+## Struktur modul
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `src/app/`: routing halaman Admin dan Mentor.
+- `src/components/`: UI page section, form, table, modal, dan state feedback.
+- `src/services/`: aturan penggunaan data dan workflow UI.
+- `src/repositories/`: kontrak repository serta implementasi mock/API.
+- `src/repositories/mock/`: seed data dan penyimpanan simulasi sesi browser.
+- `src/repositories/api/`: adapter HTTP; tidak mengimplementasikan server.
+- `src/types/`: bentuk data domain yang dipakai UI dan adapter.
+- `src/config/`: mode data dan identitas mock yang dapat diganti saat integrasi.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Kontrak API yang perlu disepakati
+
+Daftar di bawah mengikuti endpoint yang sudah dirujuk oleh API adapter. Ini
+adalah kebutuhan frontend, bukan klaim bahwa endpoint tersebut sudah tersedia.
+
+| Domain | Method dan path | Kebutuhan respons |
+| --- | --- | --- |
+| Siswa | `GET /students` | `Student[]` |
+| Siswa | `GET /students/:id` | `Student` atau `404` |
+| Siswa | `GET /mentors/:mentorId/students` | `Student[]` |
+| Siswa | `POST /students` | `Student` |
+| Siswa | `PUT /students/:id` | `Student` |
+| Siswa | `DELETE /students/:id` | status sukses tanpa payload wajib |
+| Mentor | `GET/POST /mentors`, `GET/PUT/DELETE /mentors/:id` | `Mentor` atau `Mentor[]` |
+| Mentor | `PATCH /mentors/:id/permissions` | `Mentor` |
+| Materi | `GET/POST /materials`, `GET/PUT/DELETE /materials/:id` | `LearningMaterial` |
+| Materi | `GET /materials?authorId=:id` | `LearningMaterial[]` |
+| Materi | `PATCH /materials/:id/status` | `LearningMaterial` |
+| Soal | `GET/POST /questions`, `GET/PUT/DELETE /questions/:id` | `QuestionBankItem` |
+| Soal | `GET /questions?authorId=:id` | `QuestionBankItem[]` |
+| Soal | `PATCH /questions/:id/status` | `QuestionBankItem` |
+| Tryout | `GET/POST /tryouts`, `GET/PUT/DELETE /tryouts/:id` | `TryoutPackage` |
+| Tryout | `GET /tryouts?authorId=:id` | `TryoutPackage[]` |
+| Tryout | `PATCH /tryouts/:id/status` | `TryoutPackage` |
+| Tryout | `POST /tryouts/:id/request-withdrawal` | `TryoutPackage` |
+| Jadwal | `GET/POST /schedules`, `GET/PUT/DELETE /schedules/:id` | `ScheduleItem` |
+| Jadwal | `GET /mentors/:mentorId/schedules` | `ScheduleItem[]` |
+| Jadwal | `GET /schedules/check-conflicts?...` | `ScheduleItem[]` |
+| Pengaturan | `GET/PUT /settings` | `AdminSettings` |
+| Profil mentor | `GET/PUT /mentors/:mentorId/profile` | `MentorProfile` |
+| Audit | `GET/POST /audit-logs` | `AuditLog` atau `AuditLog[]` |
+
+Sebelum integrasi, tim perlu menyepakati:
+
+1. format error JSON minimal (`message`, `code`, dan optional `details`);
+2. autentikasi browser, credential policy, dan status `401/403`;
+3. pagination, filter, sorting, dan bentuk response list;
+4. aturan soft delete/status serta transition workflow konten;
+5. format tanggal/waktu dan timezone;
+6. aturan ownership mentor terhadap siswa dan konten;
+7. idempotency dan validasi duplicate untuk operasi `POST`;
+8. CORS, base URL per environment, dan batas timeout/retry.

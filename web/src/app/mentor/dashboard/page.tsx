@@ -7,17 +7,15 @@ import { StatSection } from "@/components/dashboard/stat-section";
 import { ContentFlowPanel } from "@/components/dashboard/content-flow-panel";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { dashboardService } from "@/services";
+import { ACTIVE_MOCK_MENTOR } from "@/config/mock-identities";
 
 export const metadata: Metadata = {
   title: "Dashboard Mentor | Sahabat Alfary",
   description: "Portal kerja dan pembinaan intensif persiapan UTBK-SNBT untuk mentor Sahabat Alfary.",
 };
 
-// Simulasi ID Mentor yang sedang aktif (Dr. Hendra Gunawan)
-const ACTIVE_MENTOR_ID = "mnt-01";
-
 export default async function MentorDashboardPage() {
-  const data = await dashboardService.getMentorDashboardMetrics(ACTIVE_MENTOR_ID);
+  const data = await dashboardService.getMentorDashboardMetrics(ACTIVE_MOCK_MENTOR.id);
 
   const stats = [
     {

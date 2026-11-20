@@ -5,15 +5,16 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { GlassModal } from "@/components/ui/data-table/table-modal";
 import { Icon } from "@/components/ui/icon";
+import { ErrorState } from "@/components/ui/async-state";
 import { studentService } from "@/services";
 import type { Student } from "@/types";
 import type { ColumnDef } from "@/components/ui/data-table/types";
-
-const ACTIVE_MENTOR_ID = "mnt-01"; // Dr. Hendra Gunawan
+import { ACTIVE_MOCK_MENTOR } from "@/config/mock-identities";
 
 export function MentorStudentBinaanManagement() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal Feedback Bimbingan
   const [feedbackStudent, setFeedbackStudent] = useState<Student | null>(null);
@@ -23,15 +24,18 @@ export function MentorStudentBinaanManagement() {
   const loadData = async () => {
     try {
       // Hanya mengambil siswa binaan aktif milik mentor ini
-      const data = await studentService.getAssignedStudents(ACTIVE_MENTOR_ID);
+      const data = await studentService.getAssignedStudents(ACTIVE_MOCK_MENTOR.id);
       setStudents(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Siswa binaan gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleOpenFeedback = (student: Student) => {
@@ -109,6 +113,7 @@ export function MentorStudentBinaanManagement() {
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat siswa binaan...</div>;
   }
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
 
   return (
     <>
@@ -132,6 +137,7 @@ export function MentorStudentBinaanManagement() {
         data={students}
         searchPlaceholder="Cari siswa binaan, target jurusan, atau asal sekolah..."
         searchKeys={["name", "targetMajor", "targetCampus", "school"]}
+        capabilities={{ delete: false }}
         fieldLabels={{
           name: "Nama Siswa Binaan",
           school: "Asal Sekolah",

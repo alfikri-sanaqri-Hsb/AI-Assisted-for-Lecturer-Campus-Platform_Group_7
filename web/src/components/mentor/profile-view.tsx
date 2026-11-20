@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { Icon } from "@/components/ui/icon";
 import { settingsService } from "@/services";
 import type { MentorProfile } from "@/types";
-
-const ACTIVE_MENTOR_ID = "mnt-01";
+import { ACTIVE_MOCK_MENTOR } from "@/config/mock-identities";
+import { ErrorState } from "@/components/ui/async-state";
 
 export function MentorProfileView() {
   const [profile, setProfile] = useState<MentorProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -18,17 +19,22 @@ export function MentorProfileView() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const loadProfile = async () => {
+    try {
+      const data = await settingsService.getMentorProfile(ACTIVE_MOCK_MENTOR.id);
+      setProfile(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Profil mentor gagal dimuat.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function load() {
-      try {
-        const data = await settingsService.getMentorProfile(ACTIVE_MENTOR_ID);
-        setProfile(data);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    const timer = window.setTimeout(() => { void loadProfile(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -37,7 +43,7 @@ export function MentorProfileView() {
     setSaving(true);
     try {
       const updated = await settingsService.updateMentorProfile(
-        ACTIVE_MENTOR_ID,
+        ACTIVE_MOCK_MENTOR.id,
         profile,
         "mentor"
       );
@@ -51,8 +57,9 @@ export function MentorProfileView() {
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError(null);
     if (newPassword !== confirmPassword) {
-      alert("Konfirmasi kata sandi baru tidak cocok.");
+      setPasswordError("Konfirmasi kata sandi baru tidak cocok.");
       return;
     }
     setPasswordSuccess(true);
@@ -62,6 +69,9 @@ export function MentorProfileView() {
     setTimeout(() => setPasswordSuccess(false), 3500);
   };
 
+  if (loadError) {
+    return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadProfile(); }} />;
+  }
   if (loading || !profile) {
     return <div className="p-8 text-center text-sm text-muted">Memuat profil mentor...</div>;
   }
@@ -184,6 +194,11 @@ export function MentorProfileView() {
                 <Icon name="check" className="size-3.5" />
                 <span>Tersimpan</span>
               </span>
+            )}
+            {passwordError && (
+              <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+                {passwordError}
+              </div>
             )}
           </div>
 

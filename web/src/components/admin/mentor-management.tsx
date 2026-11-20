@@ -5,13 +5,17 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { GlassModal } from "@/components/ui/data-table/table-modal";
 import { Icon } from "@/components/ui/icon";
+import { ErrorState } from "@/components/ui/async-state";
 import { mentorService } from "@/services";
 import type { Mentor, MentorStatus } from "@/types";
 import type { ColumnDef, FormField } from "@/components/ui/data-table/types";
+import { normalizeEmail, validateEmail } from "@/lib/validation/email";
+import { normalizePhone, validatePhone } from "@/lib/validation/phone";
 
 export function AdminMentorManagement() {
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal kelola kewenangan mentor
   const [permissionMentor, setPermissionMentor] = useState<Mentor | null>(null);
@@ -23,13 +27,16 @@ export function AdminMentorManagement() {
     try {
       const data = await mentorService.getAllMentors();
       setMentors(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Data mentor gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleOpenPermissions = (m: Mentor) => {
@@ -120,8 +127,26 @@ export function AdminMentorManagement() {
 
   const formFields: FormField[] = [
     { name: "name", label: "Nama Mentor Lengkap & Gelar", type: "text", required: true, placeholder: "Contoh: Dr. Rian Pratama, M.Si." },
-    { name: "email", label: "Email Resmi Mentor", type: "text", required: true, placeholder: "nama.mentor@alfary.id" },
-    { name: "phone", label: "Nomor WhatsApp / Kontak", type: "text", required: true, placeholder: "0812-xxxx-xxxx" },
+    {
+      name: "email",
+      label: "Email Resmi Mentor",
+      type: "email",
+      required: true,
+      placeholder: "nama.mentor@alfary.id",
+      helpText: "Gunakan alamat email aktif milik mentor.",
+      normalize: normalizeEmail,
+      validate: validateEmail,
+    },
+    {
+      name: "phone",
+      label: "Nomor WhatsApp / Kontak",
+      type: "tel",
+      required: true,
+      placeholder: "0812-3456-7890",
+      helpText: "Diawali 08, 10–13 digit. Spasi dan tanda hubung dibuang otomatis.",
+      normalize: normalizePhone,
+      validate: validatePhone,
+    },
     {
       name: "subject",
       label: "Spesialisasi Subtes",
@@ -187,6 +212,7 @@ export function AdminMentorManagement() {
     loadData();
   };
 
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat data mentor...</div>;
   }
@@ -216,6 +242,7 @@ export function AdminMentorManagement() {
         onItemCreate={handleCreate}
         onItemUpdate={handleUpdate}
         onItemDelete={handleDelete}
+        capabilities={{ delete: true }}
         fieldLabels={{
           name: "Nama Lengkap & Gelar",
           email: "Email Resmi",

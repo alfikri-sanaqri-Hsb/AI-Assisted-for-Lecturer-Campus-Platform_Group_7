@@ -5,6 +5,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { GlassModal } from "@/components/ui/data-table/table-modal";
 import { Icon } from "@/components/ui/icon";
+import { ErrorState } from "@/components/ui/async-state";
 import { tryoutService } from "@/services";
 import type { TryoutPackage } from "@/types";
 import type { ColumnDef } from "@/components/ui/data-table/types";
@@ -12,6 +13,7 @@ import type { ColumnDef } from "@/components/ui/data-table/types";
 export function AdminTryoutManagement() {
   const [tryouts, setTryouts] = useState<TryoutPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal Penolakan
   const [rejectItem, setRejectItem] = useState<TryoutPackage | null>(null);
@@ -24,13 +26,16 @@ export function AdminTryoutManagement() {
     try {
       const data = await tryoutService.getAllTryouts();
       setTryouts(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Paket tryout gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleApprove = async (id: string) => {
@@ -116,6 +121,7 @@ export function AdminTryoutManagement() {
     },
   ];
 
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat data paket tryout...</div>;
   }
@@ -142,6 +148,7 @@ export function AdminTryoutManagement() {
             ],
           },
         ]}
+        capabilities={{ delete: false }}
         customRowActions={(item) => (
           <div className="flex items-center gap-1 mr-1">
             {/* Tombol Lihat Komposisi Subtes */}

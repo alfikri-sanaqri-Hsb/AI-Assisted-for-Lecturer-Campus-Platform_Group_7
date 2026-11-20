@@ -4,27 +4,31 @@ import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { StatusBadge } from "@/components/ui/data-table/status-badge";
 import { Icon } from "@/components/ui/icon";
+import { ErrorState } from "@/components/ui/async-state";
 import { scheduleService } from "@/services";
 import type { ScheduleItem } from "@/types";
 import type { ColumnDef } from "@/components/ui/data-table/types";
-
-const ACTIVE_MENTOR_ID = "mnt-01"; // Dr. Hendra Gunawan
+import { ACTIVE_MOCK_MENTOR } from "@/config/mock-identities";
 
 export function MentorScheduleView() {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
-      const data = await scheduleService.getSchedulesByMentor(ACTIVE_MENTOR_ID);
+      const data = await scheduleService.getSchedulesByMentor(ACTIVE_MOCK_MENTOR.id);
       setSchedules(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Jadwal gagal dimuat.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const columns: ColumnDef<ScheduleItem>[] = [
@@ -90,6 +94,7 @@ export function MentorScheduleView() {
   if (loading) {
     return <div className="p-8 text-center text-sm text-muted">Memuat jadwal bimbingan...</div>;
   }
+  if (loadError) return <ErrorState message={loadError} onRetry={() => { setLoadError(null); void loadData(); }} />;
 
   return (
     <div className="space-y-4">
@@ -114,6 +119,7 @@ export function MentorScheduleView() {
         data={schedules}
         searchPlaceholder="Cari agenda atau tanggal..."
         searchKeys={["title", "date", "platform", "notes"]}
+        capabilities={{ delete: false }}
         filters={[
           {
             key: "status",

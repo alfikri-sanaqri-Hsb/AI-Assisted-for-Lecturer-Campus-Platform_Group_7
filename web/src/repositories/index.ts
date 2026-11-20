@@ -28,8 +28,9 @@ import type {
   ISettingsRepository,
   IAuditRepository,
 } from "./interfaces";
+import { DATA_SOURCE_MODE } from "@/config/data-source";
 
-const USE_REAL_API = process.env.NEXT_PUBLIC_USE_API === "true";
+const USE_REAL_API = DATA_SOURCE_MODE === "api";
 
 export const studentRepository: IStudentRepository = USE_REAL_API
   ? new ApiStudentRepository()

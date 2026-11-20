@@ -436,7 +436,7 @@ export const INITIAL_QUESTIONS: QuestionBankItem[] = [
     code: "SOAL-PK-002",
     subtest: "Pengetahuan Kuantitatif (PK)",
     topic: "Aljabar & Fungsi Kuadrat",
-    difficulty: "Sukar",
+    difficulty: "Sulit",
     questionText: "Jika suku banyak f(x) = 2x^3 - px^2 + qx + 6 habis dibagi oleh (x - 2) dan memiliki sisa 10 jika dibagi oleh (x + 1), berapakah nilai dari p + 2q?",
     options: [
       { key: "A", text: "-4" },
@@ -460,7 +460,7 @@ export const INITIAL_QUESTIONS: QuestionBankItem[] = [
     code: "SOAL-LBI-003",
     subtest: "Literasi Bahasa Inggris",
     topic: "Critical Inferences & Tone",
-    difficulty: "Sukar",
+    difficulty: "Sulit",
     questionText: "The author's attitude towards the rapid deployment of autonomous algorithmic trading systems in paragraph 3 can best be described as...",
     options: [
       { key: "A", text: "unreservedly enthusiastic" },
