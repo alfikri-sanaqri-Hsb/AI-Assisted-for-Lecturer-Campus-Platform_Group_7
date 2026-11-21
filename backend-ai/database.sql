@@ -41,6 +41,7 @@ CREATE TABLE user_profiles (
   id              INT AUTO_INCREMENT PRIMARY KEY,
   user_id         INT          NOT NULL UNIQUE,
   full_name       VARCHAR(255) NOT NULL,
+  nickname        VARCHAR(50),
   phone_number    VARCHAR(20),
   profile_picture VARCHAR(255),
   date_of_birth   DATE,
@@ -437,6 +438,18 @@ CREATE TABLE subscription_orders (
 
   UNIQUE KEY uq_order_idem (user_id, idempotency_key),
   CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  email       VARCHAR(255) NOT NULL,
+  code        VARCHAR(6) NOT NULL,
+  expires_at  DATETIME NOT NULL,
+  used_at     DATETIME NULL,
+  attempts    INT NOT NULL DEFAULT 0,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_email (email),
+  INDEX idx_expires (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================

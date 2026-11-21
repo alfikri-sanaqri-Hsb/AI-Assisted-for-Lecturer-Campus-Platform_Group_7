@@ -7,7 +7,7 @@ const userModel = require('../models/user.model');
 const { comparePassword, hashPassword } = require('../utils/password');
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const MIN_PASSWORD_LENGTH = 6;
+const MIN_PASSWORD_LENGTH = 8;
 
 // String kosong dari form dianggap "dikosongkan" (null), bukan teks kosong
 const emptyToNull = (value) => (value === '' ? null : value);

@@ -6,7 +6,7 @@
 const pool = require('../config/database');
 
 // Daftar kolom yang boleh diubah lewat updateUserProfile (whitelist)
-const PROFILE_FIELDS = ['full_name', 'nickname','phone_number', 'date_of_birth', 'major', 'profile_picture'];
+const PROFILE_FIELDS = ['full_name', 'nickname', 'phone_number', 'date_of_birth', 'major', 'university', 'profile_picture'];
 
 const findUserByEmail = async (email) => {
   const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
@@ -79,9 +79,9 @@ const getDashboardData = async (userId) => {
   const query = `
     SELECT
       u.id, u.email, u.role, u.status,
-      p.full_name, p.phone_number, p.profile_picture,
+      p.full_name, p.nickname, p.phone_number, p.profile_picture,
       DATE_FORMAT(p.date_of_birth, '%Y-%m-%d') AS date_of_birth,
-      p.major
+      p.major, p.university
     FROM users u
     LEFT JOIN user_profiles p ON u.id = p.user_id
     WHERE u.id = ?
