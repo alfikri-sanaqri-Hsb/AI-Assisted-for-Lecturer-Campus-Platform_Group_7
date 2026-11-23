@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(authMiddleware, requireRole('mentor'));
 
 router.get('/summary', panel.summary);
+router.get('/students', panel.getMyStudents);
 router.get('/materials', panel.listOwn);
 router.post('/materials', panel.create);
 router.put('/materials/:id', panel.update);

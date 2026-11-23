@@ -9,6 +9,7 @@ router.use(authMiddleware, requireRole('student'));
 
 router.get('/', tryoutController.getTryouts);
 router.get('/attempts/:attemptId', tryoutController.getAttemptResult);
+router.get('/:id', tryoutController.getTryoutDetail);
 router.get('/:id/questions', tryoutController.getTryoutQuestions);
 router.post('/:id/submit', tryoutController.submitTryout);
 

@@ -3,6 +3,8 @@
  * Mentor hanya bisa membuat draft, mengubah draft, dan mengajukan (submit). Admin yang menyetujui/menerbitkan.
  */
 const model = require('../models/admin.content.model');
+const adminWebModel = require('../models/admin.web.model');
+const pool = require('../config/database');
 const handler = require('../utils/handler');
 const v = require('../utils/validators');
 const { parseListQuery, buildMeta } = require('../utils/listQuery');
@@ -21,7 +23,24 @@ async function ownDraft(id, userId) {
 
 const summary = handler(async (req, res) => {
   const data = await model.ownSummary(req.user.id);
-  res.json({ success: true, message: 'Ringkasan materi saya', data });
+  const [[mentor]] = await pool.query('SELECT id FROM mentors WHERE user_id = ?', [req.user.id]);
+  let assignedStudents = 0;
+  if (mentor) {
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM mentor_students WHERE mentor_id = ?', [mentor.id]);
+    assignedStudents = Number(total);
+  }
+  const [[{ ownQuestions }]] = await pool.query('SELECT COUNT(*) AS ownQuestions FROM questions WHERE author_id = ?', [req.user.id]);
+  data.assigned_students = assignedStudents;
+  data.own_questions = Number(ownQuestions);
+  res.json({ success: true, message: 'Ringkasan mentor saya', data });
+});
+
+const getMyStudents = handler(async (req, res) => {
+  const [[mentor]] = await pool.query('SELECT id FROM mentors WHERE user_id = ?', [req.user.id]);
+  if (!mentor) throw v.bad('Profil mentor Anda belum terhubung dengan akun ini', 404);
+  const f = parseListQuery(req.query, { terbaru: 'u.id', nama: 'name' });
+  const { rows, total } = await adminWebModel.listStudentsByMentor(mentor.id, f);
+  res.json({ success: true, message: 'Daftar siswa binaan', data: rows, meta: buildMeta(f, total) });
 });
 
 const listOwn = handler(async (req, res) => {
@@ -55,4 +74,4 @@ const remove = handler(async (req, res) => {
   res.json({ success: true, message: 'Draft materi dihapus', data: { id } });
 });
 
-module.exports = { summary, listOwn, create, update, submit, remove };
+module.exports = { summary, getMyStudents, listOwn, create, update, submit, remove };
