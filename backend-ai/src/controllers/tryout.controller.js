@@ -42,6 +42,22 @@ async function getTryouts(req, res, next) {
   }
 }
 
+async function getTryoutDetail(req, res, next) {
+  try {
+    const tryoutId = Number(req.params.id);
+    if (!Number.isInteger(tryoutId) || tryoutId <= 0) {
+      return res.status(400).json({ success: false, message: 'ID tryout tidak valid' });
+    }
+    const data = await tryoutModel.getTryoutDetail(tryoutId);
+    if (!data) {
+      return res.status(404).json({ success: false, message: 'Tryout tidak ditemukan' });
+    }
+    return res.json({ success: true, message: 'Detail tryout', data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getTryoutQuestions(req, res, next) {
   try {
     const tryoutId = Number(req.params.id);
@@ -95,4 +111,4 @@ async function getAttemptResult(req, res, next) {
   }
 }
 
-module.exports = { getTryouts, getTryoutQuestions, submitTryout, getAttemptResult };
+module.exports = { getTryouts, getTryoutDetail, getTryoutQuestions, submitTryout, getAttemptResult };

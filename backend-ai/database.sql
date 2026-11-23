@@ -452,6 +452,108 @@ CREATE TABLE IF NOT EXISTS password_resets (
   INDEX idx_expires (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------- Tabel baru: mentor_students ----------
+CREATE TABLE mentor_students (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  mentor_id   INT NOT NULL,
+  student_id  INT NOT NULL,
+  assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_mentor_student (mentor_id, student_id),
+  INDEX idx_ms_mentor (mentor_id),
+  INDEX idx_ms_student (student_id),
+  CONSTRAINT fk_ms_mentor  FOREIGN KEY (mentor_id)  REFERENCES mentors(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ms_student FOREIGN KEY (student_id) REFERENCES users(id)   ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------- Tabel baru: tryout_subtests ----------
+CREATE TABLE tryout_subtests (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  tryout_id        INT NOT NULL,
+  name             VARCHAR(100) NOT NULL,
+  question_count   INT NOT NULL DEFAULT 0,
+  duration_minutes INT NOT NULL DEFAULT 0,
+  sort_order       INT NOT NULL DEFAULT 0,
+  created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_sub_tryout (tryout_id),
+  CONSTRAINT fk_sub_tryout FOREIGN KEY (tryout_id) REFERENCES tryouts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------- Tabel baru: admin_settings ----------
+CREATE TABLE admin_settings (
+  `key`      VARCHAR(100) PRIMARY KEY,
+  `value`    TEXT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO admin_settings (`key`, `value`) VALUES
+  ('platform_name', 'Sahabat AlFaRy'),
+  ('academic_year', '2026/2027'),
+  ('support_email', 'admin@sahabat-alfary.id'),
+  ('allow_student_registration', '1'),
+  ('duplicate_similarity_threshold', '70'),
+  ('maintenance_mode', '0'),
+  ('notify_on_content_submission', '1'),
+  ('notify_on_schedule_conflict', '1');
+
+-- ---------- Tabel baru: audit_logs ----------
+CREATE TABLE audit_logs (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  actor_role   ENUM('ADMIN','MENTOR') NOT NULL DEFAULT 'ADMIN',
+  actor_name   VARCHAR(255) NOT NULL DEFAULT 'Admin',
+  action       VARCHAR(100) NOT NULL,
+  target_type  ENUM('STUDENT','MENTOR','MATERIAL','QUESTION','TRYOUT','SCHEDULE','SETTINGS') NOT NULL,
+  target_id    VARCHAR(50) NOT NULL,
+  target_title VARCHAR(255) NULL,
+  details      TEXT NULL,
+  created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_audit_actor (actor_role),
+  INDEX idx_audit_target (target_type),
+  INDEX idx_audit_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------- mentors: kolom baru ----------
+ALTER TABLE mentors
+  ADD COLUMN rating DECIMAL(3,2) NOT NULL DEFAULT 0.00,
+  ADD COLUMN status ENUM('Aktif','Menunggu Verifikasi','Cuti','Nonaktif') NOT NULL DEFAULT 'Aktif',
+  ADD COLUMN permissions JSON NULL,
+  ADD COLUMN availability_notes TEXT NULL;
+
+-- ---------- questions: kolom baru ----------
+ALTER TABLE questions
+  ADD COLUMN option_e TEXT NULL,
+  ADD COLUMN difficulty ENUM('mudah','sedang','sulit') NOT NULL DEFAULT 'sedang',
+  ADD COLUMN explanation TEXT NULL,
+  ADD COLUMN status ENUM('draft','review','approved','published','rejected') NOT NULL DEFAULT 'draft',
+  ADD COLUMN review_note TEXT NULL,
+  ADD COLUMN author_id INT NULL,
+  ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  ADD CONSTRAINT fk_question_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL;
+
+-- ---------- tryouts: kolom baru ----------
+ALTER TABLE tryouts
+  ADD COLUMN status ENUM('draft','review','approved','published','rejected') NOT NULL DEFAULT 'draft',
+  ADD COLUMN review_note TEXT NULL,
+  ADD COLUMN author_id INT NULL,
+  ADD COLUMN withdrawal_requested TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN withdrawal_reason TEXT NULL,
+  ADD CONSTRAINT fk_tryout_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL;
+
+-- ---------- schedules: kolom baru ----------
+ALTER TABLE schedules
+  MODIFY COLUMN type VARCHAR(50) NOT NULL,
+  ADD COLUMN mentor_id INT NULL,
+  ADD COLUMN platform VARCHAR(30) NULL,
+  ADD COLUMN meet_url VARCHAR(255) NULL,
+  ADD COLUMN status ENUM('Terjadwal','Berlangsung','Selesai','Dibatalkan') NOT NULL DEFAULT 'Terjadwal',
+  ADD COLUMN student_ids JSON NULL,
+  ADD COLUMN notes TEXT NULL,
+  ADD COLUMN ends_at DATETIME NULL,
+  ADD COLUMN managed_by_admin TINYINT(1) NOT NULL DEFAULT 1,
+  ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  ADD CONSTRAINT fk_schedule_mentor FOREIGN KEY (mentor_id) REFERENCES mentors(id) ON DELETE SET NULL;
 -- =====================================================
 -- DATA AWAL (SEED)
 -- Isi minimal untuk bisa langsung test endpoint

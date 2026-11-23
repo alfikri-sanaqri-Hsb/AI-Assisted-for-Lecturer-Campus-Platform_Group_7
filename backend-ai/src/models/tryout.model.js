@@ -9,6 +9,31 @@ async function getTryouts() {
   return rows;
 }
 
+// Detail 1 tryout untuk siswa (termasuk daftar subtes dan jumlah soal)
+async function getTryoutDetail(id) {
+  const [[tryout]] = await pool.query(
+    'SELECT id, title, description, duration_minutes, is_published, created_at FROM tryouts WHERE id = ? AND is_published = 1',
+    [id]
+  );
+  if (!tryout) return null;
+
+  const [subtests] = await pool.query(
+    'SELECT id, name, question_count, duration_minutes, sort_order FROM tryout_subtests WHERE tryout_id = ? ORDER BY sort_order, id',
+    [id]
+  );
+
+  const [[{ total_questions }]] = await pool.query(
+    'SELECT COUNT(*) AS total_questions FROM questions WHERE tryout_id = ?',
+    [id]
+  );
+
+  return {
+    ...tryout,
+    question_count: Number(total_questions),
+    subtests,
+  };
+}
+
 // Soal untuk dikerjakan: TANPA kunci jawaban
 async function getQuestionsForTryout(tryoutId) {
   const [rows] = await pool.query(
@@ -95,4 +120,4 @@ async function getAttemptResult(userId, attemptId) {
   return { attempt, rows };
 }
 
-module.exports = { getTryouts, getQuestionsForTryout, submitAttempt, getAttemptResult };
+module.exports = { getTryouts, getTryoutDetail, getQuestionsForTryout, submitAttempt, getAttemptResult };
