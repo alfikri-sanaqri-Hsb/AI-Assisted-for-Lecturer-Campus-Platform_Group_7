@@ -19,6 +19,10 @@ function checkEnv() {
     }
     console.warn('⚠️  JWT_SECRET masih contoh publik dari repository. Ganti dengan teks acak sebelum deploy.');
   }
+  if ((process.env.PAYMENT_MODE || 'simulation') === 'midtrans' && !process.env.MIDTRANS_SERVER_KEY) {
+    console.error('❌ PAYMENT_MODE=midtrans tetapi MIDTRANS_SERVER_KEY belum diisi di .env.');
+    process.exit(1);
+  }
   if (isProd && (process.env.PAYMENT_MODE || 'simulation') === 'simulation') {
     console.warn('⚠️  PAYMENT_MODE=simulation di production: siapa pun bisa menandai pesanannya lunas.');
   }

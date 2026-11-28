@@ -11,5 +11,6 @@ router.get('/plans', subscriptionController.getPlans);
 router.get('/status', subscriptionController.getStatus);
 router.post('/checkout', subscriptionController.checkout);
 router.post('/:id/pay', subscriptionController.pay);
+router.post('/:id/verify', subscriptionController.verify);
 
 module.exports = router;

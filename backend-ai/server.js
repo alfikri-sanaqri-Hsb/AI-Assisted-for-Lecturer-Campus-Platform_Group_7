@@ -27,6 +27,8 @@ const aiRoutes = require('./src/routes/ai.routes');
 const ptnRoutes = require('./src/routes/ptn.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const mentorPanelRoutes = require('./src/routes/mentor.panel.routes');
+const paymentRoutes = require('./src/routes/payment.routes');
+const uploadRoutes = require('./src/routes/upload.routes');
 
 // Mengimpor database agar koneksi dicek saat server start
 require('./src/config/database');
@@ -71,6 +73,8 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/practice', practiceRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/uploads', uploadRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/mentors', mentorRoutes);
 app.use('/api/ai', aiRoutes);

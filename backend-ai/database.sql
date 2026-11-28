@@ -554,6 +554,13 @@ ALTER TABLE schedules
   ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   ADD CONSTRAINT fk_schedule_mentor FOREIGN KEY (mentor_id) REFERENCES mentors(id) ON DELETE SET NULL;
+
+-- Migrasi 006: simpan token & link pembayaran Midtrans di pesanan langganan
+-- Jalankan SEKALI di phpMyAdmin. Error #1060 "Duplicate column" = sudah pernah dijalankan, aman diabaikan.
+ALTER TABLE subscription_orders
+  ADD COLUMN snap_token  VARCHAR(100) NULL,
+  ADD COLUMN payment_url VARCHAR(255) NULL;
+
 -- =====================================================
 -- DATA AWAL (SEED)
 -- Isi minimal untuk bisa langsung test endpoint

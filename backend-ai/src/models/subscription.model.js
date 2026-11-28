@@ -53,7 +53,7 @@ async function createOrder({ userId, plan, months, paymentMethod, idempotencyKey
   return result.insertId;
 }
 
-// Simulasi callback dari gateway. Hanya pesanan 'pending' yang berubah,
+// Dipakai simulasi (userId = pemilik) dan webhook/cek status Midtrans (userId = null). Hanya pesanan 'pending' yang berubah,
 // jadi memanggil ulang tidak menambah durasi premium dua kali.
 async function settleOrder(orderId, userId, outcome) {
   const conn = await pool.getConnection();
@@ -61,8 +61,8 @@ async function settleOrder(orderId, userId, outcome) {
     await conn.beginTransaction();
 
     const [[order]] = await conn.query(
-      'SELECT * FROM subscription_orders WHERE id = ? AND user_id = ? FOR UPDATE',
-      [orderId, userId]
+      `SELECT * FROM subscription_orders WHERE id = ? ${userId ? 'AND user_id = ?' : ''} FOR UPDATE`,
+      userId ? [orderId, userId] : [orderId]
     );
     if (!order) {
       await conn.rollback();
@@ -85,12 +85,12 @@ async function settleOrder(orderId, userId, outcome) {
          SET is_premium = 1,
              premium_until = DATE_ADD(GREATEST(NOW(), COALESCE(premium_until, NOW())), INTERVAL ? MONTH)
          WHERE id = ?`,
-        [order.duration_months, userId]
+        [order.duration_months, order.user_id]
       );
     }
 
     await conn.commit();
-    const updated = await findOrderById(orderId, userId);
+    const updated = await findOrderById(orderId, order.user_id);
     return { result: 'UPDATED', order: updated };
   } catch (err) {
     await conn.rollback();
@@ -98,6 +98,23 @@ async function settleOrder(orderId, userId, outcome) {
   } finally {
     conn.release();
   }
+}
+
+async function setPaymentLink(orderId, token, url) {
+  await pool.query('UPDATE subscription_orders SET snap_token = ?, payment_url = ? WHERE id = ?', [token, url, orderId]);
+}
+
+async function findOrderByIdAny(orderId) {
+  const [[row]] = await pool.query('SELECT * FROM subscription_orders WHERE id = ?', [orderId]);
+  return row || null;
+}
+
+async function getCustomer(userId) {
+  const [[row]] = await pool.query(
+    'SELECT u.email, p.full_name AS name FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id WHERE u.id = ?',
+    [userId]
+  );
+  return row || { email: '', name: '' };
 }
 
 async function expireOldPremium() {
@@ -128,6 +145,9 @@ module.exports = {
   findOrderById,
   createOrder,
   settleOrder,
+  setPaymentLink,
+  findOrderByIdAny,
+  getCustomer,
   expireOldPremium,
   getStatus,
 };
